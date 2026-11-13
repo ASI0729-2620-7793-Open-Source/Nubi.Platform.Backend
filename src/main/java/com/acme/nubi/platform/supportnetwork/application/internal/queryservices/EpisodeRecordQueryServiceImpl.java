@@ -4,6 +4,7 @@ import com.acme.nubi.platform.supportnetwork.domain.model.aggregates.EpisodeReco
 import com.acme.nubi.platform.supportnetwork.domain.model.queries.GetAllEpisodeRecordsByProfileIdQuery;
 import com.acme.nubi.platform.supportnetwork.domain.model.queries.GetEpisodeRecordByIdQuery;
 import com.acme.nubi.platform.supportnetwork.domain.model.queries.GetEpisodeRecordsByProfileIdAndDateRangeQuery;
+import com.acme.nubi.platform.supportnetwork.domain.model.queries.GetLatestEpisodeRecordByProfileIdQuery;
 import com.acme.nubi.platform.supportnetwork.domain.model.queries.GetRecentEpisodeRecordsByProfileIdQuery;
 import com.acme.nubi.platform.supportnetwork.infrastructure.persistence.jpa.repositories.EpisodeRecordRepository;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,10 @@ public class EpisodeRecordQueryServiceImpl {
 
     public Optional<EpisodeRecord> handle(GetEpisodeRecordByIdQuery query) {
         return episodeRecordRepository.findById(query.episodeRecordId());
+    }
+
+    public Optional<EpisodeRecord> handle(GetLatestEpisodeRecordByProfileIdQuery query) {
+        return episodeRecordRepository.findFirstByProfileIdOrderByStartedAtDesc(query.profileId());
     }
 
     public List<EpisodeRecord> handle(GetAllEpisodeRecordsByProfileIdQuery query) {

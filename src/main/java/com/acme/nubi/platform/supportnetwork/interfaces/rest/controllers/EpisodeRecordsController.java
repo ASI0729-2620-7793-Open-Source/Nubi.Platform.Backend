@@ -7,6 +7,7 @@ import com.acme.nubi.platform.supportnetwork.domain.model.commands.AddEpisodeNot
 import com.acme.nubi.platform.supportnetwork.domain.model.queries.GetAllEpisodeRecordsByProfileIdQuery;
 import com.acme.nubi.platform.supportnetwork.domain.model.queries.GetEpisodeRecordByIdQuery;
 import com.acme.nubi.platform.supportnetwork.domain.model.queries.GetEpisodeRecordsByProfileIdAndDateRangeQuery;
+import com.acme.nubi.platform.supportnetwork.domain.model.queries.GetLatestEpisodeRecordByProfileIdQuery;
 import com.acme.nubi.platform.supportnetwork.domain.model.queries.GetRecentEpisodeRecordsByProfileIdQuery;
 import com.acme.nubi.platform.supportnetwork.interfaces.rest.resources.AddEpisodeNoteResource;
 import com.acme.nubi.platform.supportnetwork.interfaces.rest.resources.CreateEpisodeRecordResource;
@@ -74,6 +75,15 @@ public class EpisodeRecordsController {
                 .map(EpisodeRecordResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(resources);
+    }
+
+    @GetMapping("/latest")
+    public ResponseEntity<EpisodeRecordResource> getLatestByProfileId(
+            @RequestParam Long profileId) {
+        return queryService.handle(new GetLatestEpisodeRecordByProfileIdQuery(profileId))
+                .map(EpisodeRecordResourceFromEntityAssembler::toResourceFromEntity)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/recent")
