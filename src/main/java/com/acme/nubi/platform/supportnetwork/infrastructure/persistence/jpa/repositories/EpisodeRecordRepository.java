@@ -10,6 +10,8 @@ public interface EpisodeRecordRepository extends JpaRepository<EpisodeRecord, Lo
 
     List<EpisodeRecord> findAllByProfileId(Long profileId);
 
+    List<EpisodeRecord> findAllByProfileIdOrderByStartedAtDesc(Long profileId);
+
     List<EpisodeRecord> findAllByProfileIdAndStartedAtBetween(
             Long profileId,
             LocalDateTime startDate,

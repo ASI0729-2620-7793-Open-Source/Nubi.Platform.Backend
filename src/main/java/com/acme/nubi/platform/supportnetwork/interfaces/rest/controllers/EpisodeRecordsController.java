@@ -7,6 +7,7 @@ import com.acme.nubi.platform.supportnetwork.domain.model.commands.AddEpisodeNot
 import com.acme.nubi.platform.supportnetwork.domain.model.queries.GetAllEpisodeRecordsByProfileIdQuery;
 import com.acme.nubi.platform.supportnetwork.domain.model.queries.GetEpisodeRecordByIdQuery;
 import com.acme.nubi.platform.supportnetwork.domain.model.queries.GetEpisodeRecordsByProfileIdAndDateRangeQuery;
+import com.acme.nubi.platform.supportnetwork.domain.model.queries.GetRecentEpisodeRecordsByProfileIdQuery;
 import com.acme.nubi.platform.supportnetwork.interfaces.rest.resources.AddEpisodeNoteResource;
 import com.acme.nubi.platform.supportnetwork.interfaces.rest.resources.CreateEpisodeRecordResource;
 import com.acme.nubi.platform.supportnetwork.interfaces.rest.resources.EpisodeRecordResource;
@@ -69,6 +70,18 @@ public class EpisodeRecordsController {
             @RequestParam Long profileId) {
         List<EpisodeRecordResource> resources = queryService
                 .handle(new GetAllEpisodeRecordsByProfileIdQuery(profileId))
+                .stream()
+                .map(EpisodeRecordResourceFromEntityAssembler::toResourceFromEntity)
+                .toList();
+        return ResponseEntity.ok(resources);
+    }
+
+    @GetMapping("/recent")
+    public ResponseEntity<List<EpisodeRecordResource>> getRecentByProfileId(
+            @RequestParam Long profileId,
+            @RequestParam(required = false) Integer limit) {
+        List<EpisodeRecordResource> resources = queryService
+                .handle(new GetRecentEpisodeRecordsByProfileIdQuery(profileId, limit))
                 .stream()
                 .map(EpisodeRecordResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
