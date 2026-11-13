@@ -27,6 +27,7 @@ public class EpisodeRecord {
 
     private String emotionalState;
 
+    @Column(name = "trigger_description")
     private String trigger;
 
     private String strategyUsed;
