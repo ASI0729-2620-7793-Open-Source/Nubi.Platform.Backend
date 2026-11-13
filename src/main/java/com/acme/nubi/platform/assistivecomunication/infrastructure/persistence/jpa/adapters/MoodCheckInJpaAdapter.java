@@ -56,7 +56,6 @@ public class MoodCheckInJpaAdapter implements MoodCheckInRepository {
         return repository.existsById(id);
     }
 
-    @Override
     public void deleteById(Long id) {
         repository.deleteById(id);
     }

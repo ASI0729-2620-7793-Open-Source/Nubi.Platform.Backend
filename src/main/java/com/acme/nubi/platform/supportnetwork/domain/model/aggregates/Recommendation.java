@@ -12,7 +12,7 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "recommendations")
+@Table(name = "support_network_recommendations")
 public class Recommendation {
 
     public static final String ACTIVE = "ACTIVE";

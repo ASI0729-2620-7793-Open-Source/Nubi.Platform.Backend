@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "pictograms", schema = "communication",
+@Table(name = "pictograms",
         indexes = @Index(name = "ix_pictograms_board_id_favorite", columnList = "board_id, favorite"))
 @Getter
 @Setter

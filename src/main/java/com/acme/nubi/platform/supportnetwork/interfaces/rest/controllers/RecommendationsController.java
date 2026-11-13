@@ -25,8 +25,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/v1/recommendations")
+@RestController("supportNetworkRecommendationsController")
+@RequestMapping("/api/v1/support-network/recommendations")
 public class RecommendationsController {
 
     private final RecommendationCommandServiceImpl commandService;

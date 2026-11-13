@@ -18,7 +18,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "mood_check_ins", schema = "communication",
+@Table(name = "mood_check_ins",
         indexes = @Index(name = "ix_mood_check_ins_board_id_checked_at", columnList = "board_id, checked_at"))
 @Getter
 @Setter

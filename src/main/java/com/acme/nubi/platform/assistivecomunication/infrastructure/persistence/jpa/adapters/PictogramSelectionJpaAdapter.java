@@ -59,7 +59,6 @@ public class PictogramSelectionJpaAdapter implements PictogramSelectionRepositor
         return repository.existsById(id);
     }
 
-    @Override
     public void deleteById(Long id) {
         repository.deleteById(id);
     }

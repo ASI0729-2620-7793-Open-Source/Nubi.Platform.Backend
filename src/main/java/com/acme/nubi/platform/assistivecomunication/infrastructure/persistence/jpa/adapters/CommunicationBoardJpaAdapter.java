@@ -62,7 +62,6 @@ public class CommunicationBoardJpaAdapter implements CommunicationBoardRepositor
         return repository.existsByProfileId(profileId);
     }
 
-    @Override
     public void deleteById(Long id) {
         repository.deleteById(id);
     }

@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import com.acme.nubi.platform.shared.domain.exceptions.DomainRuleViolationException;
+import com.acme.nubi.platform.shared.domain.exceptions.ResourceNotFoundException;
 
 /**
  * Convierte en 400 los datos de entrada que rechazan los comandos y value objects del dominio.
@@ -32,9 +34,25 @@ public class GlobalExceptionHandler {
         return badRequest("Invalid value '%s' for parameter '%s'.".formatted(exception.getValue(), exception.getName()));
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ProblemDetail handleNotFound(ResourceNotFoundException exception) {
+        return problem(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
+    @ExceptionHandler(DomainRuleViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ProblemDetail handleRuleViolation(DomainRuleViolationException exception) {
+        return problem(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
     private static ProblemDetail badRequest(String detail) {
-        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detail);
-        problemDetail.setTitle(HttpStatus.BAD_REQUEST.getReasonPhrase());
+        return problem(HttpStatus.BAD_REQUEST, detail);
+    }
+
+    private static ProblemDetail problem(HttpStatus status, String detail) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(status, detail);
+        problemDetail.setTitle(status.getReasonPhrase());
         return problemDetail;
     }
 }

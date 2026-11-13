@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "pictogram_categories", schema = "communication",
+@Table(name = "pictogram_categories",
         uniqueConstraints = @UniqueConstraint(name = "uq_pictogram_categories_board_id_name",
                 columnNames = {"board_id", "name"}))
 @Getter
