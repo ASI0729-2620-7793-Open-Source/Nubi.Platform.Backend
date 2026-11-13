@@ -65,6 +65,9 @@ public class EpisodeReport {
         if (periodEnd == null) {
             throw new IllegalArgumentException("Period end must not be null");
         }
+        if (periodStart.isAfter(periodEnd)) {
+            throw new IllegalArgumentException("Period start must not be after period end");
+        }
         if (episodeCount == null) {
             throw new IllegalArgumentException("Episode count must not be null");
         }

@@ -59,6 +59,9 @@ public class EpisodeRecord {
         if (sosSessionId == null) {
             throw new IllegalArgumentException("SOS session ID must not be null");
         }
+        if (startedAt == null) {
+            throw new IllegalArgumentException("Episode start time must not be null");
+        }
 
         this.profileId = profileId;
         this.sosSessionId = sosSessionId;
