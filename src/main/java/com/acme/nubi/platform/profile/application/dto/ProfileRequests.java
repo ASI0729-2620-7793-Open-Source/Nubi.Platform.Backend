@@ -74,6 +74,10 @@ public final class ProfileRequests {
             @NotNull CaregiverRole role) {
     }
 
+    /** PATCH /profiles/{id}/caregivers/{caregiverId} — el invitado acepta (status = ACCEPTED). */
+    public record UpdateCaregiverStatusRequest(@NotBlank String status) {
+    }
+
     /** POST /profiles/{id}/trusted-contacts. */
     public record LinkTrustedContactRequest(
             @NotBlank String fullName,

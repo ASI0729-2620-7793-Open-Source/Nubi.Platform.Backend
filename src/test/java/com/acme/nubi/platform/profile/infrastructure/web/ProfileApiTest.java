@@ -2,6 +2,7 @@ package com.acme.nubi.platform.profile.infrastructure.web;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -333,9 +334,11 @@ class ProfileApiTest {
         long profileId = createProfile("Lucía", "Fernández", "Luchi", 8);
         long caregiverId = inviteCaregiver(profileId, "pedro@nubi.app");
 
-        mockMvc.perform(post("/api/v1/profiles/" + profileId + "/caregivers/"
-                        + caregiverId + "/accept")
-                        .header(ACCOUNT, 555L))
+        mockMvc.perform(patch("/api/v1/profiles/" + profileId + "/caregivers/"
+                        + caregiverId)
+                        .header(ACCOUNT, 555L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\": \"ACCEPTED\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ACTIVE"))
                 .andExpect(jsonPath("$.accountId").value(555));

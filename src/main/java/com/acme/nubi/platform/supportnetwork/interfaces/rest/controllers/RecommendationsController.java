@@ -9,14 +9,15 @@ import com.acme.nubi.platform.supportnetwork.domain.model.queries.GetAllRecommen
 import com.acme.nubi.platform.supportnetwork.domain.model.queries.GetRecommendationByIdQuery;
 import com.acme.nubi.platform.supportnetwork.interfaces.rest.resources.CreateRecommendationResource;
 import com.acme.nubi.platform.supportnetwork.interfaces.rest.resources.RecommendationResource;
+import com.acme.nubi.platform.supportnetwork.interfaces.rest.resources.UpdateRecommendationResource;
 import com.acme.nubi.platform.supportnetwork.interfaces.rest.transform.CreateRecommendationCommandFromResourceAssembler;
 import com.acme.nubi.platform.supportnetwork.interfaces.rest.transform.RecommendationResourceFromEntityAssembler;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -83,9 +84,14 @@ public class RecommendationsController {
         return ResponseEntity.ok(resources);
     }
 
-    @PutMapping("/{recommendationId}/effective")
-    public ResponseEntity<RecommendationResource> markAsEffective(
-            @PathVariable Long recommendationId) {
+    /** Actualiza la recomendación; hoy solo admite marcarla como efectiva ({"effective": true}). */
+    @PatchMapping("/{recommendationId}")
+    public ResponseEntity<RecommendationResource> update(
+            @PathVariable Long recommendationId,
+            @RequestBody UpdateRecommendationResource resource) {
+        if (resource == null || !Boolean.TRUE.equals(resource.effective())) {
+            throw new IllegalArgumentException("Solo se puede marcar la recomendación como efectiva (effective = true).");
+        }
         try {
             Recommendation recommendation = commandService.handle(
                     new MarkRecommendationAsEffectiveCommand(recommendationId));

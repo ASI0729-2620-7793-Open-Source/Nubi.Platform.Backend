@@ -4,17 +4,21 @@ import com.acme.nubi.platform.profile.application.dto.ProfileRequests.CreateProf
 import com.acme.nubi.platform.profile.application.dto.ProfileRequests.InviteCaregiverRequest;
 import com.acme.nubi.platform.profile.application.dto.ProfileRequests.LinkTrustedContactRequest;
 import com.acme.nubi.platform.profile.application.dto.ProfileRequests.ReorderTrustedContactsRequest;
+import com.acme.nubi.platform.profile.application.dto.ProfileRequests.UpdateCaregiverStatusRequest;
 import com.acme.nubi.platform.profile.application.dto.ProfileRequests.UpdateDiagnosisRequest;
 import com.acme.nubi.platform.profile.application.dto.ProfileRequests.UpdatePhotoRequest;
 import com.acme.nubi.platform.profile.application.dto.ProfileRequests.UpdateProfileRequest;
 import com.acme.nubi.platform.profile.application.dto.ProfileRequests.UpdateSensoryProfileRequest;
+import com.acme.nubi.platform.profile.application.errors.BusinessError;
 import com.acme.nubi.platform.profile.application.services.ProfileApplicationService;
+import com.acme.nubi.platform.shared.application.result.Result;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -134,11 +138,22 @@ public class ProfileController {
                 service.inviteCaregiver(accountId, profileId, request));
     }
 
-    @PostMapping("/{profileId}/caregivers/{caregiverId}/accept")
-    public ResponseEntity<?> acceptCaregiver(
+    /**
+     * Cambia el estado de la invitación del cuidador. Con status = ACCEPTED (o ACTIVE) el
+     * invitado acepta con su propia cuenta. Para revocar el acceso se usa DELETE.
+     */
+    @PatchMapping("/{profileId}/caregivers/{caregiverId}")
+    public ResponseEntity<?> updateCaregiver(
             @RequestHeader(ACCOUNT_HEADER) Long accountId,
             @PathVariable Long profileId,
-            @PathVariable Long caregiverId) {
+            @PathVariable Long caregiverId,
+            @Valid @RequestBody UpdateCaregiverStatusRequest request) {
+        String status = request.status().trim().toUpperCase();
+        if (!status.equals("ACCEPTED") && !status.equals("ACTIVE")) {
+            return ResultHttpResponse.ok(Result.failure(BusinessError.validation(
+                    "status", "caregiver.status.invalid",
+                    "El único cambio de estado permitido es ACCEPTED.")));
+        }
         return ResultHttpResponse.ok(
                 service.acceptCaregiver(accountId, profileId, caregiverId));
     }
