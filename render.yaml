@@ -1,0 +1,17 @@
+# Blueprint de Render: en el panel de Render, "New > Blueprint" y elegir este repositorio.
+# Perfil "render": base H2 en memoria (datos de demostración, no persistentes).
+# Para datos persistentes, quita SPRING_PROFILES_ACTIVE y define DB_URL, DB_USERNAME y
+# DB_PASSWORD de un MySQL (ver docs/deploy/README.md).
+services:
+  - type: web
+    name: nubi-platform-backend
+    runtime: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/v1/calming-resources
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
+      - key: NUBI_DEMO_ENABLED
+        value: "true"
