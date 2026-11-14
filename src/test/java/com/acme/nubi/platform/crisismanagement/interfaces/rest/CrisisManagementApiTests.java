@@ -6,6 +6,7 @@ import com.acme.nubi.platform.crisismanagement.domain.model.events.SosModeActiva
 import com.acme.nubi.platform.crisismanagement.domain.model.valueobjects.SensoryTrigger;
 import com.acme.nubi.platform.crisismanagement.infrastructure.persistence.jpa.repositories.RecommendationPersistenceRepository;
 import com.acme.nubi.platform.crisismanagement.infrastructure.persistence.jpa.repositories.SosSessionPersistenceRepository;
+import com.acme.nubi.platform.profile.interfaces.acl.ProfilesContextFacade;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,6 +24,8 @@ import org.springframework.web.context.WebApplicationContext;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -52,11 +56,16 @@ class CrisisManagementApiTests {
     @Autowired
     private RecommendationPersistenceRepository recommendationPersistenceRepository;
 
+    /** El perfil vive en otro Bounded Context: aquí se simula su fachada (ACL). */
+    @MockitoBean
+    private ProfilesContextFacade profilesContextFacade;
+
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
+        when(profilesContextFacade.existsActiveProfile(anyLong())).thenReturn(true);
     }
 
     // ---------------------------------------------------------------- guía de acción
