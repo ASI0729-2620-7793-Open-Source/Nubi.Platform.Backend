@@ -7,7 +7,10 @@ import java.time.LocalDate;
 /**
  * Value Object inmutable. Diagnóstico declarado por el cuidador (US-04).
  * Se declara, no se valida: NUBI nunca pide verificación ni documentos.
- * La condición OTHER exige una descripción personalizada.
+ *
+ * <p>NUBI está pensada solo para niños con autismo (TEA): la condición siempre es
+ * {@link ConditionType#ASD}. El cuidador puede completar quién lo diagnosticó, la fecha y
+ * notas del profesional (por ejemplo el nivel de apoyo).
  */
 public record DeclaredDiagnosis(
         ConditionType condition,
@@ -18,20 +21,28 @@ public record DeclaredDiagnosis(
 
     public DeclaredDiagnosis {
         if (condition == null) {
-            throw new DomainRuleViolation(
-                    "condition.required", "La condición es obligatoria.", "condition");
+            condition = ConditionType.ASD;
         }
-        if (condition == ConditionType.OTHER
-                && (customDescription == null || customDescription.isBlank())) {
+        if (condition != ConditionType.ASD) {
             throw new DomainRuleViolation(
-                    "condition.other.description.required",
-                    "La condición \"Otra\" requiere una descripción.",
-                    "customDescription");
+                    "condition.autism.only",
+                    "Nubi acompaña únicamente a niños con autismo (TEA).",
+                    "condition");
+        }
+        if (diagnosisDate != null && diagnosisDate.isAfter(LocalDate.now())) {
+            throw new DomainRuleViolation(
+                    "diagnosis.date.future",
+                    "La fecha del diagnóstico no puede estar en el futuro.",
+                    "diagnosisDate");
         }
     }
 
-    /** Etiqueta a mostrar cuando la condición es OTHER (US-04, Scenario 2). */
+    /** Diagnóstico con el que nace todo perfil: autismo, sin datos del profesional. */
+    public static DeclaredDiagnosis autism() {
+        return new DeclaredDiagnosis(ConditionType.ASD, null, null, null, null);
+    }
+
     public String displayCondition() {
-        return condition == ConditionType.OTHER ? customDescription : condition.name();
+        return condition.name();
     }
 }

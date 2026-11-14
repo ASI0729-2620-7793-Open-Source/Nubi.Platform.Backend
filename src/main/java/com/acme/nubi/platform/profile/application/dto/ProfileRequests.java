@@ -59,9 +59,9 @@ public final class ProfileRequests {
             @NotNull Boolean confirmAudio) {
     }
 
-    /** PUT /profiles/{id}/diagnosis — US-04. */
+    /** PUT /profiles/{id}/diagnosis — US-04. La condición es opcional: siempre es ASD (autismo). */
     public record UpdateDiagnosisRequest(
-            @NotNull ConditionType condition,
+            ConditionType condition,
             String customDescription,
             String diagnosedBy,
             LocalDate diagnosisDate,
