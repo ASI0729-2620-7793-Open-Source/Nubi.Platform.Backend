@@ -66,12 +66,19 @@ public class EpisodeRecordsController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    /**
+     * Episodios del perfil. Con startDate y endDate (ISO, opcionales) se filtran por rango de
+     * fechas: el filtro va en query params, no en una ruta aparte.
+     */
     @GetMapping
     public ResponseEntity<List<EpisodeRecordResource>> getAllByProfileId(
-            @RequestParam Long profileId) {
-        List<EpisodeRecordResource> resources = queryService
-                .handle(new GetAllEpisodeRecordsByProfileIdQuery(profileId))
-                .stream()
+            @RequestParam Long profileId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+        var records = startDate != null && endDate != null
+                ? queryService.handle(new GetEpisodeRecordsByProfileIdAndDateRangeQuery(profileId, startDate, endDate))
+                : queryService.handle(new GetAllEpisodeRecordsByProfileIdQuery(profileId));
+        List<EpisodeRecordResource> resources = records.stream()
                 .map(EpisodeRecordResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(resources);
@@ -92,19 +99,6 @@ public class EpisodeRecordsController {
             @RequestParam(required = false) Integer limit) {
         List<EpisodeRecordResource> resources = queryService
                 .handle(new GetRecentEpisodeRecordsByProfileIdQuery(profileId, limit))
-                .stream()
-                .map(EpisodeRecordResourceFromEntityAssembler::toResourceFromEntity)
-                .toList();
-        return ResponseEntity.ok(resources);
-    }
-
-    @GetMapping("/filter")
-    public ResponseEntity<List<EpisodeRecordResource>> getByProfileIdAndDateRange(
-            @RequestParam Long profileId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
-        List<EpisodeRecordResource> resources = queryService
-                .handle(new GetEpisodeRecordsByProfileIdAndDateRangeQuery(profileId, startDate, endDate))
                 .stream()
                 .map(EpisodeRecordResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();

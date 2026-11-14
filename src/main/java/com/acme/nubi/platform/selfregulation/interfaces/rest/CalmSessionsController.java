@@ -21,6 +21,8 @@ import com.acme.nubi.platform.selfregulation.interfaces.rest.resources.ChangeLow
 import com.acme.nubi.platform.selfregulation.interfaces.rest.resources.SelectCalmingResourceResource;
 import com.acme.nubi.platform.selfregulation.interfaces.rest.resources.StartCalmSessionResource;
 import com.acme.nubi.platform.selfregulation.interfaces.rest.resources.StartCalmTimerResource;
+import com.acme.nubi.platform.selfregulation.interfaces.rest.resources.UpdateCalmSessionStatusResource;
+import com.acme.nubi.platform.selfregulation.interfaces.rest.resources.UpdateCalmTimerResource;
 import com.acme.nubi.platform.selfregulation.interfaces.rest.transform.CalmSessionResourceFromEntityAssembler;
 import com.acme.nubi.platform.selfregulation.interfaces.rest.transform.StartCalmSessionCommandFromResourceAssembler;
 import com.acme.nubi.platform.shared.application.result.Result;
@@ -31,6 +33,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -104,16 +107,19 @@ public class CalmSessionsController {
                 new ChangeLowStimulationCommand(calmSessionId, resource.active())));
     }
 
-    @PostMapping("/{calmSessionId}/pause")
-    @Operation(summary = "Pause the calm session")
-    public ResponseEntity<?> pauseCalmSession(@PathVariable Long calmSessionId) {
-        return toResponse(calmSessionCommandService.handle(new PauseCalmSessionCommand(calmSessionId)));
-    }
-
-    @PostMapping("/{calmSessionId}/resume")
-    @Operation(summary = "Resume the calm session")
-    public ResponseEntity<?> resumeCalmSession(@PathVariable Long calmSessionId) {
-        return toResponse(calmSessionCommandService.handle(new ResumeCalmSessionCommand(calmSessionId)));
+    @PatchMapping(value = "/{calmSessionId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Update the calm session status",
+            description = "status = PAUSED pausa la sesión, ACTIVE la reanuda y FINISHED la termina.")
+    public ResponseEntity<?> updateCalmSession(@PathVariable Long calmSessionId,
+                                               @RequestBody UpdateCalmSessionStatusResource resource) {
+        var status = resource == null || resource.status() == null ? "" : resource.status().toUpperCase();
+        return switch (status) {
+            case "PAUSED" -> toResponse(calmSessionCommandService.handle(new PauseCalmSessionCommand(calmSessionId)));
+            case "ACTIVE" -> toResponse(calmSessionCommandService.handle(new ResumeCalmSessionCommand(calmSessionId)));
+            case "FINISHED" -> toResponse(calmSessionCommandService.handle(new FinishCalmSessionCommand(calmSessionId)));
+            default -> ProblemDetailResponseAssembler.toResponseEntity(DomainError.validation(
+                    "SelfRegulation.InvalidCalmSessionStatus", "El estado debe ser PAUSED, ACTIVE o FINISHED."));
+        };
     }
 
     @PostMapping(value = "/{calmSessionId}/timer", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -124,16 +130,19 @@ public class CalmSessionsController {
                 new StartCalmTimerCommand(calmSessionId, resource.durationMinutes())));
     }
 
-    @PostMapping("/{calmSessionId}/timer/pause")
-    @Operation(summary = "Pause the calm timer")
-    public ResponseEntity<?> pauseCalmTimer(@PathVariable Long calmSessionId) {
+    @PatchMapping(value = "/{calmSessionId}/timer", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Pause or resume the calm timer",
+            description = "running = false pausa el temporizador y running = true lo reanuda.")
+    public ResponseEntity<?> updateCalmTimer(@PathVariable Long calmSessionId,
+                                             @RequestBody UpdateCalmTimerResource resource) {
+        if (resource == null || resource.running() == null) {
+            return ProblemDetailResponseAssembler.toResponseEntity(DomainError.validation(
+                    "SelfRegulation.InvalidCalmTimer", "Indica running = true o false."));
+        }
+        if (resource.running()) {
+            return toResponse(calmSessionCommandService.handle(new ResumeCalmTimerCommand(calmSessionId)));
+        }
         return toResponse(calmSessionCommandService.handle(new PauseCalmTimerCommand(calmSessionId)));
-    }
-
-    @PostMapping("/{calmSessionId}/timer/resume")
-    @Operation(summary = "Resume the calm timer")
-    public ResponseEntity<?> resumeCalmTimer(@PathVariable Long calmSessionId) {
-        return toResponse(calmSessionCommandService.handle(new ResumeCalmTimerCommand(calmSessionId)));
     }
 
     @PostMapping(value = "/{calmSessionId}/timer/ticks", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -143,12 +152,6 @@ public class CalmSessionsController {
                                               @RequestBody AdvanceCalmTimerResource resource) {
         return toResponse(calmSessionCommandService.handle(
                 new AdvanceCalmTimerCommand(calmSessionId, resource.elapsedSeconds())));
-    }
-
-    @PostMapping("/{calmSessionId}/finish")
-    @Operation(summary = "Finish the calm session")
-    public ResponseEntity<?> finishCalmSession(@PathVariable Long calmSessionId) {
-        return toResponse(calmSessionCommandService.handle(new FinishCalmSessionCommand(calmSessionId)));
     }
 
     private static ResponseEntity<?> toResponse(Result<CalmSession, DomainError> result) {

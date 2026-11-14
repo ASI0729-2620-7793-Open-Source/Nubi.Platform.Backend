@@ -13,6 +13,7 @@ import org.springframework.web.context.WebApplicationContext;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -87,7 +88,7 @@ class SelfRegulationApiTests {
                 .andExpect(jsonPath("$.timer.remainingSeconds").value(0))
                 .andExpect(jsonPath("$.shouldSuggestHelp").value(true));
 
-        mockMvc.perform(post(sessionUrl + "/finish"))
+        mockMvc.perform(patch(sessionUrl).contentType(MediaType.APPLICATION_JSON).content("{\"status\": \"FINISHED\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("FINISHED"))
                 .andExpect(jsonPath("$.endedAt").exists())

@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -140,7 +141,7 @@ class CrisisManagementApiTests {
         var isolationId = stepIds.get(1).longValue();
         var validationId = stepIds.get(2).longValue();
 
-        mockMvc.perform(post(sessionUrl + "/steps/" + biteToolId + "/complete"))
+        mockMvc.perform(patch(sessionUrl + "/steps/" + biteToolId).contentType(MediaType.APPLICATION_JSON).content("{\"status\": \"COMPLETED\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.completedSteps", hasSize(1)))
                 .andExpect(jsonPath("$.completedSteps[0].skipped").value(false))
@@ -148,46 +149,46 @@ class CrisisManagementApiTests {
                 .andExpect(jsonPath("$.currentStepOrder").value(1));
 
         // Completar dos veces el mismo paso no cambia nada.
-        mockMvc.perform(post(sessionUrl + "/steps/" + biteToolId + "/complete"))
+        mockMvc.perform(patch(sessionUrl + "/steps/" + biteToolId).contentType(MediaType.APPLICATION_JSON).content("{\"status\": \"COMPLETED\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.completedSteps", hasSize(1)));
 
         // Un paso obligatorio no se omite sin confirmación.
-        mockMvc.perform(post(sessionUrl + "/steps/" + isolationId + "/skip"))
+        mockMvc.perform(patch(sessionUrl + "/steps/" + isolationId).contentType(MediaType.APPLICATION_JSON).content("{\"status\": \"SKIPPED\"}"))
                 .andExpect(status().isBadRequest());
-        mockMvc.perform(post(sessionUrl + "/steps/" + isolationId + "/skip")
+        mockMvc.perform(patch(sessionUrl + "/steps/" + isolationId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"confirmed\": false}"))
+                        .content("{\"status\": \"SKIPPED\", \"confirmed\": false}"))
                 .andExpect(status().isBadRequest());
-        mockMvc.perform(post(sessionUrl + "/steps/" + isolationId + "/skip")
+        mockMvc.perform(patch(sessionUrl + "/steps/" + isolationId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"confirmed\": true}"))
+                        .content("{\"status\": \"SKIPPED\", \"confirmed\": true}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.completedSteps", hasSize(2)))
                 .andExpect(jsonPath("$.completedSteps[1].skipped").value(true))
                 .andExpect(jsonPath("$.currentStepOrder").value(2));
 
         // Un paso opcional sí se puede omitir sin confirmar.
-        mockMvc.perform(post(sessionUrl + "/steps/" + validationId + "/skip"))
+        mockMvc.perform(patch(sessionUrl + "/steps/" + validationId).contentType(MediaType.APPLICATION_JSON).content("{\"status\": \"SKIPPED\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.completedSteps", hasSize(3)));
 
         // Técnica alternativa: el aislamiento tiene dos, la validación emocional ninguna.
-        mockMvc.perform(post(sessionUrl + "/steps/" + isolationId + "/alternative"))
-                .andExpect(status().isOk())
+        mockMvc.perform(post(sessionUrl + "/steps/" + isolationId + "/alternatives"))
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.code").value("NOISE_CANCELLING_HEADPHONES"))
                 .andExpect(jsonPath("$.stepId").value(isolationId));
-        mockMvc.perform(post(sessionUrl + "/steps/" + validationId + "/alternative"))
+        mockMvc.perform(post(sessionUrl + "/steps/" + validationId + "/alternatives"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("CrisisManagement.AlternativeTechniqueNotFound"));
-        mockMvc.perform(post(sessionUrl + "/steps/999999/complete"))
+        mockMvc.perform(patch(sessionUrl + "/steps/999999").contentType(MediaType.APPLICATION_JSON).content("{\"status\": \"COMPLETED\"}"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("CrisisManagement.StepNotFound"));
 
         // Faltan pasos: la sesión termina antes de tiempo.
-        mockMvc.perform(post(sessionUrl + "/finish")
+        mockMvc.perform(patch(sessionUrl)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"observedState\": \"TIRED\"}"))
+                        .content("{\"status\": \"FINISHED\", \"observedState\": \"TIRED\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("FINISHED_EARLY"))
                 .andExpect(jsonPath("$.observedState").value("TIRED"))
@@ -201,10 +202,10 @@ class CrisisManagementApiTests {
                         && event.trigger() == SensoryTrigger.TACTILE);
 
         // Una sesión cerrada no admite cambios y deja de ser la sesión en curso.
-        mockMvc.perform(post(sessionUrl + "/finish"))
+        mockMvc.perform(patch(sessionUrl).contentType(MediaType.APPLICATION_JSON).content("{\"status\": \"FINISHED\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("CrisisManagement.InvalidSosSessionOperation"));
-        mockMvc.perform(post(sessionUrl + "/steps/" + biteToolId + "/complete"))
+        mockMvc.perform(patch(sessionUrl + "/steps/" + biteToolId).contentType(MediaType.APPLICATION_JSON).content("{\"status\": \"COMPLETED\"}"))
                 .andExpect(status().isConflict());
         mockMvc.perform(get("/api/v1/profiles/101/sos-sessions/in-progress"))
                 .andExpect(status().isNotFound());
@@ -229,16 +230,16 @@ class CrisisManagementApiTests {
         var guide = mockMvc.perform(get(sessionUrl + "/guide")).andReturn();
         List<Number> stepIds = JsonPath.read(guide.getResponse().getContentAsString(), "$.steps[*].id");
         for (var stepId : stepIds) {
-            mockMvc.perform(post(sessionUrl + "/steps/" + stepId.longValue() + "/complete"))
+            mockMvc.perform(patch(sessionUrl + "/steps/" + stepId.longValue()).contentType(MediaType.APPLICATION_JSON).content("{\"status\": \"COMPLETED\"}"))
                     .andExpect(status().isOk());
         }
 
         mockMvc.perform(get(sessionUrl))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.completedSteps", hasSize(6)));
-        mockMvc.perform(post(sessionUrl + "/finish")
+        mockMvc.perform(patch(sessionUrl)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"observedState\": \"CALM\", \"finalIntensity\": \"CALM\"}"))
+                        .content("{\"status\": \"FINISHED\", \"observedState\": \"CALM\", \"finalIntensity\": \"CALM\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("FINISHED"))
                 .andExpect(jsonPath("$.finalIntensity").value("CALM"));
@@ -258,7 +259,7 @@ class CrisisManagementApiTests {
                 .andReturn();
         Number sessionId = JsonPath.read(created.getResponse().getContentAsString(), "$.id");
 
-        mockMvc.perform(post("/api/v1/sos-sessions/" + sessionId.longValue() + "/finish"))
+        mockMvc.perform(patch("/api/v1/sos-sessions/" + sessionId.longValue()).contentType(MediaType.APPLICATION_JSON).content("{\"status\": \"FINISHED\"}"))
                 .andExpect(status().isOk());
 
         var saved = sosSessionPersistenceRepository.findById(sessionId.longValue()).orElseThrow();
@@ -294,17 +295,17 @@ class CrisisManagementApiTests {
         mockMvc.perform(get("/api/v1/sos-sessions/999999/guide"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("CrisisManagement.SosSessionNotFound"));
-        mockMvc.perform(post("/api/v1/sos-sessions/999999/steps/1/complete"))
+        mockMvc.perform(patch("/api/v1/sos-sessions/999999/steps/1").contentType(MediaType.APPLICATION_JSON).content("{\"status\": \"COMPLETED\"}"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("CrisisManagement.SosSessionNotFound"));
-        mockMvc.perform(post("/api/v1/sos-sessions/999999/finish")).andExpect(status().isNotFound());
+        mockMvc.perform(patch("/api/v1/sos-sessions/999999").contentType(MediaType.APPLICATION_JSON).content("{\"status\": \"FINISHED\"}")).andExpect(status().isNotFound());
     }
 
     // ---------------------------------------------------------------- recomendaciones
 
     @Test
     void generatesOneRecommendationPerTopicWithoutDuplicatingThem() throws Exception {
-        var first = mockMvc.perform(post("/api/v1/profiles/301/recommendations/generate"))
+        var first = mockMvc.perform(post("/api/v1/profiles/301/recommendations"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)))
                 .andExpect(jsonPath("$[0].topic").value("SENSORY"))
@@ -315,7 +316,7 @@ class CrisisManagementApiTests {
                 .andReturn();
         List<Number> firstIds = JsonPath.read(first.getResponse().getContentAsString(), "$[*].id");
 
-        var second = mockMvc.perform(post("/api/v1/profiles/301/recommendations/generate"))
+        var second = mockMvc.perform(post("/api/v1/profiles/301/recommendations"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)))
                 .andReturn();
@@ -332,7 +333,7 @@ class CrisisManagementApiTests {
 
     @Test
     void ratesARecommendationOncePerCaregiver() throws Exception {
-        var generated = mockMvc.perform(post("/api/v1/profiles/302/recommendations/generate")).andReturn();
+        var generated = mockMvc.perform(post("/api/v1/profiles/302/recommendations")).andReturn();
         Number recommendationId = JsonPath.read(generated.getResponse().getContentAsString(), "$[0].id");
         var url = "/api/v1/recommendations/" + recommendationId.longValue() + "/preferences";
 
@@ -380,7 +381,7 @@ class CrisisManagementApiTests {
 
     @Test
     void anEpisodeWithNewInformationReplacesTheRecommendationsWithANewVersion() throws Exception {
-        var generated = mockMvc.perform(post("/api/v1/profiles/303/recommendations/generate")).andReturn();
+        var generated = mockMvc.perform(post("/api/v1/profiles/303/recommendations")).andReturn();
         Number sensoryId = JsonPath.read(generated.getResponse().getContentAsString(), "$[0].id");
 
         // Un episodio sin información nueva no cambia nada.
