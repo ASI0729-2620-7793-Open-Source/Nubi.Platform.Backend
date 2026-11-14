@@ -137,3 +137,45 @@ Content-Type: application/problem+json
   "code": "subscription.profile.limit"
 }
 ```
+
+## Cambios: un solo niño con autismo
+
+- Cada cuenta acompaña a **un único niño**. Crear un segundo perfil activo responde `409` con
+  `code = profile.single.child` (archivar el perfil libera el cupo). Todos los planes tienen `maxProfiles = 1`;
+  los planes solo cambian el cupo de cuidadores (2 / 5 / 50).
+- Nubi es solo para niños con **autismo (TEA)**: todo perfil nace con el diagnóstico `ASD` y
+  `PUT /profiles/{id}/diagnosis` ya no exige `condition`. Otra condición responde `400` con
+  `code = condition.autism.only`.
+- `ProfilesContextFacade` (`profile/interfaces/acl`) expone el perfil sensorial a los demás contextos:
+  Autorregulación filtra los estímulos y Gestión de Crisis ordena la guía SOS con datos reales.
+
+## Nuevos Bounded Contexts
+
+### IAM — `/api/v1/authentication`
+
+| Método | Ruta | Detalle |
+| --- | --- | --- |
+| `POST` | `/sign-up` | `{ email, fullName, password }` → `201 { id, email, fullName }` (contraseña con hash PBKDF2) |
+| `POST` | `/sign-in` | `{ email, password }` → `200 { id, email, fullName }` |
+| `GET` | `/me` | Con cabecera `X-Account-Id` |
+
+El `id` devuelto es el que el frontend envía en `X-Account-Id`. Al arrancar se crea la cuenta demo
+`demo@nubi.app` / `nubi123` (desactivable con `NUBI_DEMO_ENABLED=false`).
+
+### Rutina Visual — `/api/v1/profiles/{profileId}/routine-steps`
+
+| Método | Ruta | Detalle |
+| --- | --- | --- |
+| `GET` | `` | Pasos del día; si no hay, crea la rutina sugerida (10 pasos) |
+| `POST` | `` | `{ title, icon, scheduledTime: "HH:mm" }` → `201` (máximo 20 pasos) |
+| `PUT` | `/{stepId}` | Editar |
+| `PUT` | `/order` | `{ order: [ids] }` |
+| `DELETE` | `/{stepId}` | `204` |
+| `POST` / `DELETE` | `/{stepId}/completion` | Marcar / desmarcar como hecho hoy (`completedToday`) |
+
+## Integraciones nuevas
+
+- Al terminar una sesión SOS (`EpisodeFinishedEvent`), Red de Apoyo registra el episodio automáticamente y
+  publica `EpisodeRegisteredEvent` para que Gestión de Crisis actualice sus recomendaciones.
+- Catálogo de calma: se suman `BALLOON_BREATHING` (respiración guiada) y `CALM_DRAWING` (dibujo).
+- CORS acepta `PATCH` (usado por las selecciones de pictogramas).
