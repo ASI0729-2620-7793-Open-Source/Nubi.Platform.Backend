@@ -11,8 +11,8 @@ import com.acme.nubi.platform.crisismanagement.domain.model.queries.GetSosSessio
 import com.acme.nubi.platform.crisismanagement.domain.services.ActionGuideQueryService;
 import com.acme.nubi.platform.crisismanagement.domain.services.SosSessionCommandService;
 import com.acme.nubi.platform.crisismanagement.domain.services.SosSessionQueryService;
-import com.acme.nubi.platform.crisismanagement.interfaces.rest.resources.FinishSosSessionResource;
-import com.acme.nubi.platform.crisismanagement.interfaces.rest.resources.SkipStepResource;
+import com.acme.nubi.platform.crisismanagement.interfaces.rest.resources.UpdateSosSessionResource;
+import com.acme.nubi.platform.crisismanagement.interfaces.rest.resources.UpdateStepStatusResource;
 import com.acme.nubi.platform.crisismanagement.interfaces.rest.resources.SosSessionResource;
 import com.acme.nubi.platform.crisismanagement.interfaces.rest.resources.StartSosSessionResource;
 import com.acme.nubi.platform.crisismanagement.interfaces.rest.transform.ActionGuideResourceFromEntityAssembler;
@@ -23,9 +23,11 @@ import com.acme.nubi.platform.shared.domain.model.errors.DomainError;
 import com.acme.nubi.platform.shared.interfaces.rest.transform.ProblemDetailResponseAssembler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -93,42 +95,44 @@ public class SosSessionsController {
         return ResponseEntity.ok(ActionGuideResourceFromEntityAssembler.toResourceFromEntity(guide.get(), ordered));
     }
 
-    @PostMapping("/{sosSessionId}/steps/{stepId}/complete")
-    @Operation(summary = "Complete a step",
-            description = "Registra el paso como completado y avanza al siguiente. Repetirlo no tiene efecto.")
-    public ResponseEntity<?> completeStep(@PathVariable Long sosSessionId, @PathVariable Long stepId) {
-        return toResponse(sosSessionCommandService.handle(new CompleteStepCommand(sosSessionId, stepId)));
+    @PatchMapping(value = "/{sosSessionId}/steps/{stepId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Update the status of a step",
+            description = "status = COMPLETED registra el paso como hecho (repetirlo no tiene efecto). "
+                    + "status = SKIPPED lo omite; omitir un paso obligatorio exige confirmed = true.")
+    public ResponseEntity<?> updateStep(@PathVariable Long sosSessionId, @PathVariable Long stepId,
+                                        @RequestBody UpdateStepStatusResource resource) {
+        var status = resource == null || resource.status() == null ? "" : resource.status().toUpperCase();
+        return switch (status) {
+            case "COMPLETED" -> toResponse(sosSessionCommandService.handle(new CompleteStepCommand(sosSessionId, stepId)));
+            case "SKIPPED" -> toResponse(sosSessionCommandService.handle(
+                    new SkipStepCommand(sosSessionId, stepId, Boolean.TRUE.equals(resource.confirmed()))));
+            default -> ProblemDetailResponseAssembler.toResponseEntity(CrisisManagementErrors.invalidSosSessionData(
+                    "El estado del paso debe ser COMPLETED o SKIPPED."));
+        };
     }
 
-    @PostMapping("/{sosSessionId}/steps/{stepId}/skip")
-    @Operation(summary = "Skip a step",
-            description = "Omitir un paso obligatorio exige confirmed = true.")
-    public ResponseEntity<?> skipStep(@PathVariable Long sosSessionId, @PathVariable Long stepId,
-                                      @RequestBody(required = false) SkipStepResource resource) {
-        var confirmed = resource != null && Boolean.TRUE.equals(resource.confirmed());
-        return toResponse(sosSessionCommandService.handle(new SkipStepCommand(sosSessionId, stepId, confirmed)));
-    }
-
-    @PostMapping("/{sosSessionId}/steps/{stepId}/alternative")
-    @Operation(summary = "Request an alternative technique",
+    @PostMapping("/{sosSessionId}/steps/{stepId}/alternatives")
+    @Operation(summary = "Create an alternative technique suggestion",
             description = "Sugiere la técnica alternativa del paso cuando el cuidador no puede aplicarlo.")
-    public ResponseEntity<?> requestAlternative(@PathVariable Long sosSessionId, @PathVariable Long stepId) {
+    public ResponseEntity<?> createAlternative(@PathVariable Long sosSessionId, @PathVariable Long stepId) {
         return sosSessionCommandService.handle(new RequestAlternativeCommand(sosSessionId, stepId)).fold(
-                technique -> ResponseEntity.ok(
+                technique -> ResponseEntity.status(HttpStatus.CREATED).body(
                         ActionGuideResourceFromEntityAssembler.toTechniqueResource(stepId, technique)),
                 ProblemDetailResponseAssembler::toResponseEntity);
     }
 
-    @PostMapping("/{sosSessionId}/finish")
-    @Operation(summary = "Finish the SOS session",
-            description = "Con todos los pasos atendidos termina la sesión; si faltan pasos, la termina antes de tiempo. "
-                    + "El estado observado y la intensidad final son opcionales.")
-    public ResponseEntity<?> finishSosSession(@PathVariable Long sosSessionId,
-                                              @RequestBody(required = false) FinishSosSessionResource resource) {
-        var observedState = resource == null ? null : resource.observedState();
-        var finalIntensity = resource == null ? null : resource.finalIntensity();
+    @PatchMapping(value = "/{sosSessionId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Update the SOS session status",
+            description = "status = FINISHED cierra la sesión: si todos los pasos fueron atendidos termina normal, "
+                    + "si no, antes de tiempo. observedState y finalIntensity son opcionales.")
+    public ResponseEntity<?> updateSosSession(@PathVariable Long sosSessionId,
+                                              @RequestBody UpdateSosSessionResource resource) {
+        if (resource == null || !"FINISHED".equalsIgnoreCase(resource.status())) {
+            return ProblemDetailResponseAssembler.toResponseEntity(CrisisManagementErrors.invalidSosSessionData(
+                    "El único cambio de estado permitido es FINISHED."));
+        }
         return toResponse(sosSessionCommandService.handle(
-                new FinishSosSessionCommand(sosSessionId, observedState, finalIntensity)));
+                new FinishSosSessionCommand(sosSessionId, resource.observedState(), resource.finalIntensity())));
     }
 
     private static ResponseEntity<?> toResponse(Result<SosSession, DomainError> result) {

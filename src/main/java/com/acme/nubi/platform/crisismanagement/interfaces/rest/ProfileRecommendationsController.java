@@ -47,8 +47,8 @@ public class ProfileRecommendationsController {
                 .toList());
     }
 
-    @PostMapping("/generate")
-    @Operation(summary = "Generate the recommendations of a profile",
+    @PostMapping
+    @Operation(summary = "Create (generate) the recommendations of a profile",
             description = "Genera una recomendación por tópico según el perfil sensorial. "
                     + "Si el perfil ya las tiene, las devuelve sin duplicarlas.")
     public ResponseEntity<?> generateRecommendations(@PathVariable Long profileId) {
