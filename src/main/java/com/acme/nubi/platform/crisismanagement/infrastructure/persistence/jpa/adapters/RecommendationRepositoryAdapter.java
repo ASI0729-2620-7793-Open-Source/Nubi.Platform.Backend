@@ -14,11 +14,11 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class RecommendationRepositoryImpl implements RecommendationRepository {
+public class RecommendationRepositoryAdapter implements RecommendationRepository {
 
     private final RecommendationPersistenceRepository recommendationPersistenceRepository;
 
-    public RecommendationRepositoryImpl(RecommendationPersistenceRepository recommendationPersistenceRepository) {
+    public RecommendationRepositoryAdapter(RecommendationPersistenceRepository recommendationPersistenceRepository) {
         this.recommendationPersistenceRepository = recommendationPersistenceRepository;
     }
 
