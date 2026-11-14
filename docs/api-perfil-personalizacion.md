@@ -52,7 +52,7 @@ suscripción (US-46 a US-48).
 | --- | --- | --- |
 | `GET` | `/profiles/{id}/caregivers` | listar |
 | `POST` | `/profiles/{id}/caregivers` | invitar → `201`, estado `PENDING` |
-| `POST` | `/profiles/{id}/caregivers/{caregiverId}/accept` | el invitado acepta con su cuenta |
+| `PATCH` | `/profiles/{id}/caregivers/{caregiverId}` | el invitado acepta con su cuenta: `{"status": "ACCEPTED"}` |
 | `DELETE` | `/profiles/{id}/caregivers/{caregiverId}` | revocar acceso → `REVOKED` |
 
 ### Contactos de confianza
@@ -179,3 +179,29 @@ El `id` devuelto es el que el frontend envía en `X-Account-Id`. Al arrancar se 
   publica `EpisodeRegisteredEvent` para que Gestión de Crisis actualice sus recomendaciones.
 - Catálogo de calma: se suman `BALLOON_BREATHING` (respiración guiada) y `CALM_DRAWING` (dibujo).
 - CORS acepta `PATCH` (usado por las selecciones de pictogramas).
+
+## Convención REST: sustantivos en la URL, el verbo es el método HTTP
+
+Las rutas nombran recursos; la acción la da el método (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`).
+Un cambio de estado es un `PATCH` sobre el recurso con el nuevo estado en el cuerpo, y un filtro va en
+query params. Rutas que cambiaron:
+
+| Antes | Ahora | Cuerpo |
+| --- | --- | --- |
+| `POST /sos-sessions/{id}/steps/{stepId}/complete` | `PATCH /sos-sessions/{id}/steps/{stepId}` | `{"status": "COMPLETED"}` |
+| `POST /sos-sessions/{id}/steps/{stepId}/skip` | `PATCH /sos-sessions/{id}/steps/{stepId}` | `{"status": "SKIPPED", "confirmed": true}` |
+| `POST /sos-sessions/{id}/finish` | `PATCH /sos-sessions/{id}` | `{"status": "FINISHED", "observedState": "CALM", "finalIntensity": "CALM"}` |
+| `POST /sos-sessions/{id}/steps/{stepId}/alternative` | `POST /sos-sessions/{id}/steps/{stepId}/alternatives` (201) | — |
+| `PATCH .../selections/{id}/delivered`, `/understood`, `/not-understood` | `PATCH /profiles/{id}/communication-board/selections/{selectionId}` | `{"status": "DELIVERED"}`, `"UNDERSTOOD"` o `"NOT_UNDERSTOOD"` |
+| `POST /profiles/{id}/recommendations/generate` | `POST /profiles/{id}/recommendations` | — |
+| `POST /profiles/{id}/caregivers/{caregiverId}/accept` | `PATCH /profiles/{id}/caregivers/{caregiverId}` | `{"status": "ACCEPTED"}` |
+| `PUT /episode-reports/{id}/share` | `POST /episode-reports/{id}/shares` | `{"sharedWith": "Dra. Paredes"}` |
+| `GET /episode-records/filter?...` | `GET /episode-records?profileId=&startDate=&endDate=` | — |
+| `PUT /help-requests/{id}/confirmation`, `/cancellation` | `PATCH /help-requests/{id}` | `{"status": "CONFIRMED"}` o `"CANCELLED"` |
+| `PUT /support-network/recommendations/{id}/effective` | `PATCH /support-network/recommendations/{id}` | `{"effective": true}` |
+| `POST /calm-sessions/{id}/pause`, `/resume`, `/finish` | `PATCH /calm-sessions/{id}` | `{"status": "PAUSED"}`, `"ACTIVE"` o `"FINISHED"` |
+| `POST /calm-sessions/{id}/timer/pause`, `/timer/resume` | `PATCH /calm-sessions/{id}/timer` | `{"running": false}` o `true` |
+
+Se mantienen `POST /authentication/sign-up` y `/sign-in` (convención habitual de autenticación) y las
+consultas con adjetivos (`/latest`, `/recent`, `/active`, `/in-progress`, `/quick-access`), que son lecturas,
+no acciones.
