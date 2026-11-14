@@ -19,7 +19,9 @@ import com.acme.nubi.platform.profile.domain.model.aggregates.NeurodivergentProf
 import com.acme.nubi.platform.profile.domain.model.aggregates.Subscription;
 import com.acme.nubi.platform.profile.domain.model.entities.ProfileCaregiver;
 import com.acme.nubi.platform.profile.domain.model.entities.TrustedContact;
+import com.acme.nubi.platform.profile.domain.model.enums.ConditionType;
 import com.acme.nubi.platform.profile.domain.model.valueobjects.DeclaredDiagnosis;
+import com.acme.nubi.platform.profile.domain.model.valueobjects.PlanLimits;
 import com.acme.nubi.platform.profile.domain.model.valueobjects.SensoryProfile;
 import com.acme.nubi.platform.profile.domain.repository.ProfileRepository;
 import com.acme.nubi.platform.profile.domain.repository.SubscriptionRepository;
@@ -53,17 +55,14 @@ public class ProfileApplicationService {
     @Transactional
     public Result<ProfileResponse, BusinessError> create(
             Long accountId, CreateProfileRequest request) {
-        Subscription subscription = subscriptionFor(accountId);
+        // Regla de negocio: una cuenta acompaña a un único niño con autismo.
         int ownedProfiles = profileRepository.findByAccountId(accountId).size();
-        if (!subscription.allowsAnotherProfile(ownedProfiles)) {
+        if (ownedProfiles >= PlanLimits.SINGLE_CHILD) {
             return Result.failure(BusinessError.conflict(
-                    "subscription.profile.limit",
-                    "El plan "
-                            + subscription.plan()
-                            + " permite hasta "
-                            + subscription.limits().maxProfiles()
-                            + " perfiles."));
+                    "profile.single.child",
+                    "Tu cuenta ya acompaña a un niño. Nubi permite un solo perfil por cuenta."));
         }
+        subscriptionFor(accountId);
 
         ProfileCaregiver primary =
                 ProfileCaregiver.primary(accountId, request.primaryCaregiverEmail(), Instant.now());
@@ -76,7 +75,9 @@ public class ProfileApplicationService {
                         request.gender(),
                         request.communicativeNeed(),
                         primary,
-                        Instant.now()));
+                        Instant.now())
+                        // Todo perfil nace con el diagnóstico de autismo declarado.
+                        .declareDiagnosis(DeclaredDiagnosis.autism()));
         return persist(created);
     }
 
@@ -151,7 +152,8 @@ public class ProfileApplicationService {
                 request.tactile(),
                 request.lowStimulationEnabled(),
                 request.prioritizeVisuals(),
-                request.confirmAudio());        Result<NeurodivergentProfile, BusinessError> updated =
+                request.confirmAudio());
+        Result<NeurodivergentProfile, BusinessError> updated =
                 DomainGuard.guard(() -> profile.registerSensitivities(sensory));
         Result<ProfileResponse, BusinessError> saved = persist(updated);
         return DomainGuard.map(saved, ProfileResponse::sensoryProfile);
@@ -182,7 +184,7 @@ public class ProfileApplicationService {
         NeurodivergentProfile profile = loaded.success().orElseThrow();
         Result<DeclaredDiagnosis, BusinessError> diagnosis = DomainGuard.guard(() ->
                 new DeclaredDiagnosis(
-                        request.condition(),
+                        request.condition() == null ? ConditionType.ASD : request.condition(),
                         request.customDescription(),
                         request.diagnosedBy(),
                         request.diagnosisDate(),

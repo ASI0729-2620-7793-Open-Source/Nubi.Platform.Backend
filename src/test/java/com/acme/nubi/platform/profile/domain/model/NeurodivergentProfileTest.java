@@ -138,16 +138,25 @@ class NeurodivergentProfileTest {
     // --- US-04 -----------------------------------------------------------
 
     @Test
-    @DisplayName("La condición OTHER exige customDescription (400 con el campo)")
-    void otherConditionRequiresCustomDescription() {
+    @DisplayName("Nubi solo acepta la condición ASD (autismo)")
+    void onlyAutismIsAccepted() {
         DomainRuleViolation violation = assertThrows(DomainRuleViolation.class, () ->
                 new DeclaredDiagnosis(
-                        ConditionType.OTHER, "  ", "Dra. Gómez",
+                        ConditionType.ADHD, null, "Dra. Gómez",
                         LocalDate.parse("2024-05-01"), null));
 
         assertEquals(DomainRuleKind.VALIDATION, violation.kind());
-        assertEquals("customDescription", violation.field());
-        assertEquals("condition.other.description.required", violation.code());
+        assertEquals("condition", violation.field());
+        assertEquals("condition.autism.only", violation.code());
+    }
+
+    @Test
+    @DisplayName("Sin condición explícita el diagnóstico es ASD")
+    void missingConditionDefaultsToAutism() {
+        DeclaredDiagnosis diagnosis = new DeclaredDiagnosis(null, null, null, null, null);
+
+        assertEquals(ConditionType.ASD, diagnosis.condition());
+        assertEquals(ConditionType.ASD, DeclaredDiagnosis.autism().condition());
     }
 
     @Test
@@ -157,12 +166,12 @@ class NeurodivergentProfileTest {
         DeclaredDiagnosis first = new DeclaredDiagnosis(
                 ConditionType.ASD, null, "Dra. Gómez", LocalDate.parse("2024-05-01"), "A");
         DeclaredDiagnosis second = new DeclaredDiagnosis(
-                ConditionType.OTHER, "Síndrome de Rett", null, null, null);
+                ConditionType.ASD, null, null, null, "Nivel 2 de apoyo");
 
         NeurodivergentProfile updated = profile.declareDiagnosis(first).declareDiagnosis(second);
 
-        assertEquals(ConditionType.OTHER, updated.diagnosis().condition());
-        assertEquals("Síndrome de Rett", updated.diagnosis().displayCondition());
+        assertEquals(ConditionType.ASD, updated.diagnosis().condition());
+        assertEquals("Nivel 2 de apoyo", updated.diagnosis().professionalNotes());
         assertNull(updated.diagnosis().diagnosedBy());
         assertNull(profile.diagnosis());
     }
