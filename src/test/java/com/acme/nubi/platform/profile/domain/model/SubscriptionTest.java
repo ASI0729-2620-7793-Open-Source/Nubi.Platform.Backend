@@ -25,23 +25,23 @@ class SubscriptionTest {
         assertEquals(Long.valueOf(42L), subscription.accountId());
         assertEquals(PlanType.FREEMIUM, subscription.plan());
         assertEquals(SubscriptionStatus.ACTIVE, subscription.status());
-        assertEquals(3, subscription.limits().maxProfiles());
+        assertEquals(1, subscription.limits().maxProfiles());
         assertEquals(2, subscription.limits().maxCaregiversPerProfile());
     }
 
     @Test
-    @DisplayName("Cada plan impone sus límites de perfiles y cuidadores")
+    @DisplayName("Todo plan permite un solo niño; cambia el cupo de cuidadores")
     void planLimits() {
         PlanLimits freemium = PlanLimits.of(PlanType.FREEMIUM);
-        assertEquals(3, freemium.maxProfiles());
+        assertEquals(1, freemium.maxProfiles());
         assertEquals(2, freemium.maxCaregiversPerProfile());
 
         PlanLimits family = PlanLimits.of(PlanType.FAMILY_PREMIUM);
-        assertEquals(10, family.maxProfiles());
+        assertEquals(1, family.maxProfiles());
         assertEquals(5, family.maxCaregiversPerProfile());
 
         PlanLimits institutional = PlanLimits.of(PlanType.INSTITUTIONAL);
-        assertEquals(200, institutional.maxProfiles());
+        assertEquals(1, institutional.maxProfiles());
         assertEquals(50, institutional.maxCaregiversPerProfile());
     }
 
@@ -51,8 +51,8 @@ class SubscriptionTest {
         PlanLimits freemium = PlanLimits.of(PlanType.FREEMIUM);
 
         assertTrue(freemium.allowsAnotherProfile(0));
-        assertTrue(freemium.allowsAnotherProfile(2));
-        assertFalse(freemium.allowsAnotherProfile(3));
+        assertFalse(freemium.allowsAnotherProfile(1));
+        assertFalse(freemium.allowsAnotherProfile(2));
 
         assertTrue(freemium.allowsAnotherCaregiver(1));
         assertFalse(freemium.allowsAnotherCaregiver(2));
@@ -66,10 +66,10 @@ class SubscriptionTest {
 
         assertEquals(PlanType.FAMILY_PREMIUM, upgraded.plan());
         assertEquals(SubscriptionStatus.ACTIVE, upgraded.status());
-        assertEquals(10, upgraded.limits().maxProfiles());
+        assertEquals(1, upgraded.limits().maxProfiles());
         assertEquals(5, upgraded.limits().maxCaregiversPerProfile());
-        assertTrue(upgraded.allowsAnotherProfile(9));
-        assertFalse(upgraded.allowsAnotherProfile(10));
+        assertTrue(upgraded.allowsAnotherProfile(0));
+        assertFalse(upgraded.allowsAnotherProfile(1));
     }
 
     @Test
@@ -93,6 +93,6 @@ class SubscriptionTest {
 
         assertEquals(Long.valueOf(7L), changed.id());
         assertEquals(Long.valueOf(42L), changed.accountId());
-        assertEquals(200, changed.limits().maxProfiles());
+        assertEquals(50, changed.limits().maxCaregiversPerProfile());
     }
 }

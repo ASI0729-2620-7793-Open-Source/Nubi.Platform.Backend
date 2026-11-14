@@ -220,30 +220,46 @@ class ProfileApiTest {
     }
 
     @Test
-    @DisplayName("Diagnóstico OTHER sin descripción responde 400 con customDescription")
-    void diagnosisOtherWithoutDescriptionReturns400() throws Exception {
+    @DisplayName("Nubi solo acompaña a niños con autismo: otra condición responde 400")
+    void diagnosisOtherThanAutismReturns400() throws Exception {
         long profileId = createProfile("Lucía", "Fernández", "Luchi", 8);
 
         mockMvc.perform(put("/api/v1/profiles/" + profileId + "/diagnosis")
                         .header(ACCOUNT, accountId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"condition":"OTHER"}
+                                {"condition":"ADHD"}
                                 """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("condition.other.description.required"))
-                .andExpect(jsonPath("$.field").value("customDescription"));
+                .andExpect(jsonPath("$.code").value("condition.autism.only"))
+                .andExpect(jsonPath("$.field").value("condition"));
     }
 
     @Test
-    @DisplayName("GET /profiles/{id}/diagnosis sin diagnóstico responde 404")
-    void getDiagnosisWithoutDiagnosisReturns404() throws Exception {
+    @DisplayName("Todo perfil nace con el diagnóstico de autismo (ASD) declarado")
+    void newProfileStartsWithAutismDiagnosis() throws Exception {
         long profileId = createProfile("Lucía", "Fernández", "Luchi", 8);
 
         mockMvc.perform(get("/api/v1/profiles/" + profileId + "/diagnosis")
                         .header(ACCOUNT, accountId))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("diagnosis.notFound"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.condition").value("ASD"));
+    }
+
+    @Test
+    @DisplayName("El diagnóstico se puede completar sin enviar la condición (siempre ASD)")
+    void diagnosisWithoutConditionDefaultsToAutism() throws Exception {
+        long profileId = createProfile("Lucía", "Fernández", "Luchi", 8);
+
+        mockMvc.perform(put("/api/v1/profiles/" + profileId + "/diagnosis")
+                        .header(ACCOUNT, accountId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"diagnosedBy":"Dr. Rojas","professionalNotes":"Nivel 1"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.condition").value("ASD"))
+                .andExpect(jsonPath("$.diagnosedBy").value("Dr. Rojas"));
     }
 
     // --- US-05: foto -----------------------------------------------------
@@ -360,28 +376,22 @@ class ProfileApiTest {
     // --- Límites de plan --------------------------------------------------
 
     @Test
-    @DisplayName("FREEMIUM permite 3 perfiles; el cuarto responde 409 (US-46)")
-    void freemiumProfileLimitReturns409() throws Exception {
+    @DisplayName("Una cuenta acompaña a un solo niño: el segundo perfil responde 409")
+    void secondProfileReturns409() throws Exception {
         createProfile("Lucía", "Fernández", "Luchi", 8);
-        createProfile("Mateo", "Fernández", "Mati", 5);
-        createProfile("Sofía", "Fernández", "Sofi", 3);
 
         mockMvc.perform(post("/api/v1/profiles")
                         .header(ACCOUNT, accountId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createBody("Leo", "Fernández", "Leo", 2)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("subscription.profile.limit"))
-                .andExpect(jsonPath("$.detail").value(
-                        org.hamcrest.Matchers.containsString("3 perfiles")));
+                .andExpect(jsonPath("$.code").value("profile.single.child"));
     }
 
     @Test
-    @DisplayName("Subir a FAMILY_PREMIUM libera el cupo de perfiles (US-48)")
-    void upgradingPlanReleasesProfileLimit() throws Exception {
+    @DisplayName("Ni subiendo a FAMILY_PREMIUM se puede tener un segundo niño (US-48)")
+    void upgradingPlanKeepsSingleChild() throws Exception {
         createProfile("Lucía", "Fernández", "Luchi", 8);
-        createProfile("Mateo", "Fernández", "Mati", 5);
-        createProfile("Sofía", "Fernández", "Sofi", 3);
 
         mockMvc.perform(put("/api/v1/subscriptions/current/plan")
                         .header(ACCOUNT, accountId)
@@ -391,13 +401,28 @@ class ProfileApiTest {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.plan").value("FAMILY_PREMIUM"))
-                .andExpect(jsonPath("$.maxProfiles").value(10))
+                .andExpect(jsonPath("$.maxProfiles").value(1))
                 .andExpect(jsonPath("$.maxCaregiversPerProfile").value(5));
 
         mockMvc.perform(post("/api/v1/profiles")
                         .header(ACCOUNT, accountId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createBody("Leo", "Fernández", "Leo", 2)))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("Archivar al niño libera el cupo para registrar otro perfil")
+    void archivingReleasesSingleChildSlot() throws Exception {
+        long profileId = createProfile("Lucía", "Fernández", "Luchi", 8);
+
+        mockMvc.perform(delete("/api/v1/profiles/" + profileId).header(ACCOUNT, accountId))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/profiles")
+                        .header(ACCOUNT, accountId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createBody("Leo", "Fernández", "Leo", 4)))
                 .andExpect(status().isCreated());
     }
 
@@ -408,7 +433,7 @@ class ProfileApiTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.plan").value("FREEMIUM"))
                 .andExpect(jsonPath("$.status").value("ACTIVE"))
-                .andExpect(jsonPath("$.maxProfiles").value(3))
+                .andExpect(jsonPath("$.maxProfiles").value(1))
                 .andExpect(jsonPath("$.maxCaregiversPerProfile").value(2));
     }
 
