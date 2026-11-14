@@ -158,13 +158,13 @@ class CommunicationBoardApiTest {
                 .andReturn();
         long selectionId = idFrom(selection);
 
-        mockMvc.perform(patch(base(106) + "/selections/" + selectionId + "/delivered"))
+        mockMvc.perform(patch(base(106) + "/selections/" + selectionId).contentType(MediaType.APPLICATION_JSON).content("{\"status\": \"DELIVERED\"}"))
                 .andExpect(jsonPath("$.status", is("DELIVERED")));
-        mockMvc.perform(patch(base(106) + "/selections/" + selectionId + "/not-understood"))
+        mockMvc.perform(patch(base(106) + "/selections/" + selectionId).contentType(MediaType.APPLICATION_JSON).content("{\"status\": \"NOT_UNDERSTOOD\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status", is("NOT_UNDERSTOOD")));
         // Una selección resuelta no cambia de estado
-        mockMvc.perform(patch(base(106) + "/selections/" + selectionId + "/understood"))
+        mockMvc.perform(patch(base(106) + "/selections/" + selectionId).contentType(MediaType.APPLICATION_JSON).content("{\"status\": \"UNDERSTOOD\"}"))
                 .andExpect(status().isConflict());
 
         mockMvc.perform(get(base(106) + "/selections"))
@@ -173,7 +173,7 @@ class CommunicationBoardApiTest {
                 .andExpect(jsonPath("$", hasSize(0)));
 
         // Una selección de otro perfil no es accesible
-        mockMvc.perform(patch(base(107) + "/selections/" + selectionId + "/understood"))
+        mockMvc.perform(patch(base(107) + "/selections/" + selectionId).contentType(MediaType.APPLICATION_JSON).content("{\"status\": \"UNDERSTOOD\"}"))
                 .andExpect(status().isNotFound());
     }
 
