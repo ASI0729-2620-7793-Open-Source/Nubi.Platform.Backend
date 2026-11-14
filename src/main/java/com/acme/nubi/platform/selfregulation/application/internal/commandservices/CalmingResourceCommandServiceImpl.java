@@ -38,7 +38,12 @@ public class CalmingResourceCommandServiceImpl implements CalmingResourceCommand
             new CalmingResource("STARRY_SKY", "Cielo estrellado", ResourceType.VISUAL,
                     "stimuli/starry-sky.jpg", 10, true),
             new CalmingResource("GENTLE_RAIN", "Lluvia suave", ResourceType.AUDITORY,
-                    "stimuli/gentle-rain.jpg", 10, true));
+                    "stimuli/gentle-rain.jpg", 10, true),
+            // Recursos interactivos: no dependen de la sensibilidad visual o auditiva del niño
+            new CalmingResource("BALLOON_BREATHING", "Respiración del globo", ResourceType.GUIDED_BREATHING,
+                    "stimuli/balloon-breathing.svg", 10, true),
+            new CalmingResource("CALM_DRAWING", "Dibujo tranquilo", ResourceType.DRAWING_CANVAS,
+                    "stimuli/calm-drawing.svg", 10, true));
 
     private final CalmingResourceRepository calmingResourceRepository;
     private final FavoriteResourceRepository favoriteResourceRepository;

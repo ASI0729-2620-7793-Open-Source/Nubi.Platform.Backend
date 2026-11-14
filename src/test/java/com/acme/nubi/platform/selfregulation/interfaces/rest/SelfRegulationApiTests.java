@@ -36,7 +36,7 @@ class SelfRegulationApiTests {
     void listsTheSeededCatalogAndFiltersByType() throws Exception {
         mockMvc.perform(get("/api/v1/calming-resources"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(6)))
+                .andExpect(jsonPath("$", hasSize(8)))
                 .andExpect(jsonPath("$[0].code").value("FLOATING_BUBBLES"));
 
         mockMvc.perform(get("/api/v1/calming-resources").param("type", "AUDITORY"))
