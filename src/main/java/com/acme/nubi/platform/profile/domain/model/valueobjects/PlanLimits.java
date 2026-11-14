@@ -4,11 +4,16 @@ import com.acme.nubi.platform.profile.domain.errors.DomainRuleViolation;
 import com.acme.nubi.platform.profile.domain.model.enums.PlanType;
 
 /**
- * Value Object. Límites que un plan impone sobre los perfiles y los
- * cuidadores por perfil. Los valores se definieron en el diseño del producto:
- * FREEMIUM 3/2, FAMILY_PREMIUM 10/5, INSTITUTIONAL 200/50.
+ * Value Object. Límites que un plan impone sobre los perfiles y los cuidadores por perfil.
+ *
+ * <p>Cada cuenta acompaña a un único niño con autismo, sea cual sea el plan: lo que cambia
+ * entre planes es cuántos cuidadores (familia, terapeutas, docentes) pueden sumarse.
+ * FREEMIUM 1/2, FAMILY_PREMIUM 1/5, INSTITUTIONAL 1/50.
  */
 public record PlanLimits(int maxProfiles, int maxCaregiversPerProfile) {
+
+    /** Una cuenta, un niño. */
+    public static final int SINGLE_CHILD = 1;
 
     public PlanLimits {
         if (maxProfiles <= 0 || maxCaregiversPerProfile <= 0) {
@@ -22,9 +27,9 @@ public record PlanLimits(int maxProfiles, int maxCaregiversPerProfile) {
     /** Límites del plan, usados al asignar o actualizar una suscripción. */
     public static PlanLimits of(PlanType plan) {
         return switch (plan) {
-            case FREEMIUM -> new PlanLimits(3, 2);
-            case FAMILY_PREMIUM -> new PlanLimits(10, 5);
-            case INSTITUTIONAL -> new PlanLimits(200, 50);
+            case FREEMIUM -> new PlanLimits(SINGLE_CHILD, 2);
+            case FAMILY_PREMIUM -> new PlanLimits(SINGLE_CHILD, 5);
+            case INSTITUTIONAL -> new PlanLimits(SINGLE_CHILD, 50);
         };
     }
 
