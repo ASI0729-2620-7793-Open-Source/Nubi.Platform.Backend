@@ -13,12 +13,14 @@ import com.acme.nubi.platform.supportnetwork.interfaces.rest.resources.UpdateRec
 import com.acme.nubi.platform.supportnetwork.interfaces.rest.transform.CreateRecommendationCommandFromResourceAssembler;
 import com.acme.nubi.platform.supportnetwork.interfaces.rest.transform.RecommendationResourceFromEntityAssembler;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,6 +31,12 @@ import java.util.List;
 @RestController("supportNetworkRecommendationsController")
 @RequestMapping("/api/v1/support-network/recommendations")
 public class RecommendationsController {
+
+    /**
+     * Identifica la cuenta que consulta. Las lecturas sin esta cabecera responden 401; la
+     * cabecera no es un token firmado, por lo que no verifica la identidad.
+     */
+    private static final String ACCOUNT_HEADER = "X-Account-Id";
 
     private final RecommendationCommandServiceImpl commandService;
     private final RecommendationQueryServiceImpl queryService;
@@ -55,7 +63,12 @@ public class RecommendationsController {
     }
 
     @GetMapping("/{recommendationId}")
-    public ResponseEntity<RecommendationResource> getById(@PathVariable Long recommendationId) {
+    public ResponseEntity<RecommendationResource> getById(
+            @RequestHeader(name = ACCOUNT_HEADER, required = false) Long accountId,
+            @PathVariable Long recommendationId) {
+        if (accountId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         return queryService.handle(new GetRecommendationByIdQuery(recommendationId))
                 .map(RecommendationResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
@@ -64,7 +77,11 @@ public class RecommendationsController {
 
     @GetMapping
     public ResponseEntity<List<RecommendationResource>> getAllByProfileId(
+            @RequestHeader(name = ACCOUNT_HEADER, required = false) Long accountId,
             @RequestParam Long profileId) {
+        if (accountId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         List<RecommendationResource> resources = queryService
                 .handle(new GetAllRecommendationsByProfileIdQuery(profileId))
                 .stream()
@@ -75,7 +92,11 @@ public class RecommendationsController {
 
     @GetMapping("/active")
     public ResponseEntity<List<RecommendationResource>> getActiveByProfileId(
+            @RequestHeader(name = ACCOUNT_HEADER, required = false) Long accountId,
             @RequestParam Long profileId) {
+        if (accountId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         List<RecommendationResource> resources = queryService
                 .handle(new GetActiveRecommendationsByProfileIdQuery(profileId))
                 .stream()
