@@ -44,7 +44,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping(value = "/api/v1/calm-sessions", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Calm Sessions", description = "Sesiones de calma y temporizador de calma (Autorregulación)")
+@Tag(name = "Calm Sessions", description = "Calm sessions and calm timer (Self-Regulation)")
 public class CalmSessionsController {
 
     private final CalmSessionCommandService calmSessionCommandService;
@@ -58,7 +58,7 @@ public class CalmSessionsController {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Start a calm session",
-            description = "Abre una sesión de calma para un perfil, con o sin un recurso elegido.")
+            description = "Opens a calm session for a profile, with or without a chosen resource.")
     public ResponseEntity<?> startCalmSession(@RequestBody StartCalmSessionResource resource) {
         var command = StartCalmSessionCommandFromResourceAssembler.toCommandFromResource(resource);
         return calmSessionCommandService.handle(command).fold(
@@ -92,7 +92,7 @@ public class CalmSessionsController {
 
     @PutMapping(value = "/{calmSessionId}/intensity", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Adjust the stimulus intensity",
-            description = "Una intensidad mayor al máximo del recurso se mantiene en el máximo.")
+            description = "An intensity above the resource's maximum stays at the maximum.")
     public ResponseEntity<?> adjustIntensity(@PathVariable Long calmSessionId,
                                              @RequestBody AdjustIntensityResource resource) {
         return toResponse(calmSessionCommandService.handle(
@@ -109,7 +109,7 @@ public class CalmSessionsController {
 
     @PatchMapping(value = "/{calmSessionId}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Update the calm session status",
-            description = "status = PAUSED pausa la sesión, ACTIVE la reanuda y FINISHED la termina.")
+            description = "status = PAUSED pauses the session, ACTIVE resumes it and FINISHED ends it.")
     public ResponseEntity<?> updateCalmSession(@PathVariable Long calmSessionId,
                                                @RequestBody UpdateCalmSessionStatusResource resource) {
         var status = resource == null || resource.status() == null ? "" : resource.status().toUpperCase();
@@ -132,7 +132,7 @@ public class CalmSessionsController {
 
     @PatchMapping(value = "/{calmSessionId}/timer", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Pause or resume the calm timer",
-            description = "running = false pausa el temporizador y running = true lo reanuda.")
+            description = "running = false pauses the timer and running = true resumes it.")
     public ResponseEntity<?> updateCalmTimer(@PathVariable Long calmSessionId,
                                              @RequestBody UpdateCalmTimerResource resource) {
         if (resource == null || resource.running() == null) {
@@ -147,7 +147,7 @@ public class CalmSessionsController {
 
     @PostMapping(value = "/{calmSessionId}/timer/ticks", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Advance the calm timer",
-            description = "Descuenta los segundos transcurridos. Si el temporizador llega a cero con la sesión abierta, shouldSuggestHelp es verdadero.")
+            description = "Subtracts the elapsed seconds. If the timer reaches zero while the session is open, shouldSuggestHelp is true.")
     public ResponseEntity<?> advanceCalmTimer(@PathVariable Long calmSessionId,
                                               @RequestBody AdvanceCalmTimerResource resource) {
         return toResponse(calmSessionCommandService.handle(

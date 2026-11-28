@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(value = "/api/v1/action-guides", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Action Guides", description = "Guía de contención del Modo SOS (Gestión de Crisis)")
+@Tag(name = "Action Guides", description = "SOS Mode containment guide (Crisis Management)")
 public class ActionGuidesController {
 
     private final ActionGuideQueryService actionGuideQueryService;
@@ -27,7 +27,7 @@ public class ActionGuidesController {
 
     @GetMapping("/active")
     @Operation(summary = "Get the active action guide",
-            description = "La guía vigente con sus pasos en el orden original.")
+            description = "The current guide with its steps in their original order.")
     public ResponseEntity<ActionGuideResource> getActiveActionGuide() {
         return actionGuideQueryService.handle(new GetActiveActionGuideQuery())
                 .map(ActionGuideResourceFromEntityAssembler::toResourceFromEntity)

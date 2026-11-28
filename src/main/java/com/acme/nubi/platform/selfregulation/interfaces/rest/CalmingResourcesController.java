@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(value = "/api/v1/calming-resources", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Calming Resources", description = "Catálogo de recursos de calma (Autorregulación)")
+@Tag(name = "Calming Resources", description = "Calming resource catalog (Self-Regulation)")
 public class CalmingResourcesController {
 
     private final CalmingResourceQueryService calmingResourceQueryService;
@@ -30,7 +30,7 @@ public class CalmingResourcesController {
 
     @GetMapping
     @Operation(summary = "Get calming resources",
-            description = "Lista los recursos de calma vigentes. Con profileId, solo los adecuados para su perfil sensorial; con type, solo los de ese tipo.")
+            description = "Lists the active calming resources. With profileId, only those suited to its sensory profile; with type, only that type.")
     public ResponseEntity<?> getCalmingResources(@RequestParam(required = false) Long profileId,
                                                  @RequestParam(required = false) ResourceType type) {
         var result = calmingResourceQueryService.handle(new GetCalmingResourcesQuery(profileId, type));

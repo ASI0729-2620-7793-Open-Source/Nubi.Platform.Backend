@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(value = "/api/v1/profiles/{profileId}/favorite-resources", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Calming Resources", description = "Catálogo de recursos de calma (Autorregulación)")
+@Tag(name = "Calming Resources", description = "Calming resource catalog (Self-Regulation)")
 public class ProfileFavoriteResourcesController {
 
     private final CalmingResourceCommandService calmingResourceCommandService;

@@ -23,7 +23,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/v1/profiles/{profileId}/recommendations", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Recommendations", description = "Recomendaciones personalizadas por perfil (Gestión de Crisis)")
+@Tag(name = "Recommendations", description = "Personalized recommendations per profile (Crisis Management)")
 public class ProfileRecommendationsController {
 
     private final RecommendationCommandService recommendationCommandService;
@@ -37,7 +37,7 @@ public class ProfileRecommendationsController {
 
     @GetMapping
     @Operation(summary = "Get the recommendations of a profile",
-            description = "Solo las versiones vigentes, opcionalmente filtradas por tópico.")
+            description = "Only current versions, optionally filtered by topic.")
     public ResponseEntity<List<RecommendationResource>> getRecommendations(
             @PathVariable Long profileId, @RequestParam(required = false) RecommendationTopic topic) {
         var recommendations = recommendationQueryService.handle(
@@ -49,8 +49,8 @@ public class ProfileRecommendationsController {
 
     @PostMapping
     @Operation(summary = "Create (generate) the recommendations of a profile",
-            description = "Genera una recomendación por tópico según el perfil sensorial. "
-                    + "Si el perfil ya las tiene, las devuelve sin duplicarlas.")
+            description = "Generates one recommendation per topic from the sensory profile. "
+                    + "If the profile already has them, returns them without duplicates.")
     public ResponseEntity<?> generateRecommendations(@PathVariable Long profileId) {
         return recommendationCommandService.handle(new GenerateRecommendationsCommand(profileId)).fold(
                 recommendations -> ResponseEntity.ok(recommendations.stream()
