@@ -1,16 +1,23 @@
 package com.acme.nubi.platform.selfregulation.interfaces.rest;
 
+import com.acme.nubi.platform.selfregulation.application.internal.outboundservices.acl.ExternalProfileService;
+import com.acme.nubi.platform.selfregulation.domain.model.valueobjects.ProfileId;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.util.Optional;
+
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -26,11 +33,17 @@ class SelfRegulationApiTests {
     @Autowired
     private WebApplicationContext context;
 
+    /** Estas pruebas usan perfiles ficticios: se simula el contexto de Perfil y Personalización. */
+    @MockitoBean
+    private ExternalProfileService externalProfileService;
+
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
+        when(externalProfileService.existsProfile(any(ProfileId.class))).thenReturn(true);
+        when(externalProfileService.fetchSensoryProfile(any(ProfileId.class))).thenReturn(Optional.empty());
     }
 
     @Test

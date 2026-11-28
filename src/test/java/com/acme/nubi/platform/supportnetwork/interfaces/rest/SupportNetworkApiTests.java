@@ -39,7 +39,12 @@ class SupportNetworkApiTests {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("ACTIVE"));
 
+        // TS-05: sin identificar la cuenta, la consulta responde 401.
         mockMvc.perform(get("/api/v1/support-network/recommendations").param("profileId", "77"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/api/v1/support-network/recommendations").param("profileId", "77")
+                        .header("X-Account-Id", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].title").value("Respirar"));
