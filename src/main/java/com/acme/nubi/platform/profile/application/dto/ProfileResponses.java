@@ -107,6 +107,11 @@ public final class ProfileResponses {
     }
 
     /** Cuidador asociado al perfil (US-06). */
+    /** Invitación pendiente para la cuenta que consulta. */
+    public record InvitationResponse(
+            Long profileId, Long caregiverId, String childName, String role, Instant invitedAt) {
+    }
+
     public record CaregiverResponse(
             Long id,
             String invitedEmail,

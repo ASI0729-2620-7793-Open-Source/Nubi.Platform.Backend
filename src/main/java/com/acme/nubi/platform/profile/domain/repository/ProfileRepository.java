@@ -21,6 +21,9 @@ public interface ProfileRepository {
     /** Perfiles en los que la cuenta figura como cuidador activo. */
     List<NeurodivergentProfile> findByCaregiverAccountId(Long accountId);
 
+    /** Perfiles activos con una invitación pendiente para ese correo. */
+    List<NeurodivergentProfile> findByPendingInvitationEmail(String email);
+
     /** Cuenta que posee el perfil, leída del cuidador principal. */
     Optional<Long> findOwnerAccountId(Long profileId);
 

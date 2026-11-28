@@ -1,5 +1,6 @@
 package com.acme.nubi.platform.supportnetwork.interfaces.rest.controllers;
 
+import com.acme.nubi.platform.shared.domain.exceptions.ResourceNotFoundException;
 import com.acme.nubi.platform.supportnetwork.application.internal.commandservices.EpisodeReportCommandServiceImpl;
 import com.acme.nubi.platform.supportnetwork.application.internal.queryservices.EpisodeReportQueryServiceImpl;
 import com.acme.nubi.platform.supportnetwork.domain.model.aggregates.EpisodeReport;
@@ -57,7 +58,7 @@ public class EpisodeReportsController {
         return queryService.handle(new GetEpisodeReportByIdQuery(episodeReportId))
                 .map(EpisodeReportResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseThrow(() -> new ResourceNotFoundException("The requested resource does not exist."));
     }
 
     @GetMapping
@@ -82,7 +83,7 @@ public class EpisodeReportsController {
             return ResponseEntity.ok(
                     EpisodeReportResourceFromEntityAssembler.toResourceFromEntity(episodeReport));
         } catch (EntityNotFoundException exception) {
-            return ResponseEntity.notFound().build();
+            throw new ResourceNotFoundException("The requested resource does not exist.");
         }
     }
 }

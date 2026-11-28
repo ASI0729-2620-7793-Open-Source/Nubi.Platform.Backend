@@ -1,5 +1,6 @@
 package com.acme.nubi.platform.iam.interfaces.rest;
 
+import com.acme.nubi.platform.shared.infrastructure.security.AccessTokenService;
 import com.acme.nubi.platform.iam.domain.model.commands.SignInCommand;
 import com.acme.nubi.platform.iam.domain.model.commands.SignUpCommand;
 import com.acme.nubi.platform.iam.domain.model.errors.IamErrors;
@@ -27,8 +28,12 @@ public class AuthenticationController {
 
     private final AuthenticationCommandService authenticationCommandService;
 
-    public AuthenticationController(AuthenticationCommandService authenticationCommandService) {
+    private final AccessTokenService tokens;
+
+    public AuthenticationController(
+            AuthenticationCommandService authenticationCommandService, AccessTokenService tokens) {
         this.authenticationCommandService = authenticationCommandService;
+        this.tokens = tokens;
     }
 
     @PostMapping(value = "/sign-up", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -37,7 +42,8 @@ public class AuthenticationController {
         return authenticationCommandService
                 .handle(new SignUpCommand(resource.email(), resource.fullName(), resource.password()))
                 .fold(account -> ResponseEntity.status(HttpStatus.CREATED)
-                                .body(AuthenticatedUserResource.from(account)),
+                                .body(AuthenticatedUserResource.from(account)
+                                        .withToken(tokens.issue(account.getId()))),
                         ProblemDetailResponseAssembler::toResponseEntity);
     }
 
@@ -46,12 +52,13 @@ public class AuthenticationController {
     public ResponseEntity<?> signIn(@RequestBody SignInResource resource) {
         return authenticationCommandService
                 .handle(new SignInCommand(resource.email(), resource.password()))
-                .fold(account -> ResponseEntity.ok(AuthenticatedUserResource.from(account)),
+                .fold(account -> ResponseEntity.ok(AuthenticatedUserResource.from(account)
+                                .withToken(tokens.issue(account.getId()))),
                         ProblemDetailResponseAssembler::toResponseEntity);
     }
 
     @GetMapping("/me")
-    @Operation(summary = "Get the signed-in account", description = "Uses the X-Account-Id header.")
+    @Operation(summary = "Get the signed-in account", description = "Uses the account of the access token.")
     public ResponseEntity<?> me(@RequestHeader("X-Account-Id") Long accountId) {
         return authenticationCommandService.findById(accountId)
                 .<ResponseEntity<?>>map(account -> ResponseEntity.ok(AuthenticatedUserResource.from(account)))

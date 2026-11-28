@@ -1,5 +1,6 @@
 package com.acme.nubi.platform.crisismanagement.interfaces.rest;
 
+import com.acme.nubi.platform.shared.domain.exceptions.ResourceNotFoundException;
 import com.acme.nubi.platform.crisismanagement.domain.model.queries.GetActiveSosSessionByProfileIdQuery;
 import com.acme.nubi.platform.crisismanagement.domain.model.queries.GetSosSessionsByProfileIdQuery;
 import com.acme.nubi.platform.crisismanagement.domain.services.SosSessionQueryService;
@@ -43,6 +44,6 @@ public class ProfileSosSessionsController {
         return sosSessionQueryService.handle(new GetActiveSosSessionByProfileIdQuery(profileId))
                 .map(SosSessionResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseThrow(() -> new ResourceNotFoundException("The requested resource does not exist."));
     }
 }
