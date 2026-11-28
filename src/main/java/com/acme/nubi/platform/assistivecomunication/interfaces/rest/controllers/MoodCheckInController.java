@@ -25,7 +25,7 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/api/v1/profiles/{profileId}/communication-board/mood-check-ins",
         produces = "application/json")
-@Tag(name = "Mood Check-ins", description = "Registro del estado de ánimo")
+@Tag(name = "Mood Check-ins", description = "Mood check-ins")
 public class MoodCheckInController {
     private final CommunicationBoardCommandService commandService;
     private final CommunicationBoardQueryService queryService;
@@ -37,7 +37,7 @@ public class MoodCheckInController {
     }
 
     @PostMapping
-    @Operation(summary = "Registra el estado de ánimo del usuario")
+    @Operation(summary = "Registers the user's mood")
     public ResponseEntity<MoodCheckInResource> registerMood(@PathVariable Long profileId,
                                                             @Valid @RequestBody RegisterMoodResource resource) {
         var checkIn = commandService.handle(new RegisterMoodCommand(profileId, resource.level()));
@@ -46,7 +46,7 @@ public class MoodCheckInController {
     }
 
     @GetMapping
-    @Operation(summary = "Historial de check-ins, del más reciente al más antiguo")
+    @Operation(summary = "Check-in history, newest first")
     public ResponseEntity<List<MoodCheckInResource>> getMoodCheckIns(@PathVariable Long profileId) {
         var checkIns = queryService.handle(new GetMoodCheckInsByProfileIdQuery(profileId));
         return ResponseEntity.ok(checkIns.stream()

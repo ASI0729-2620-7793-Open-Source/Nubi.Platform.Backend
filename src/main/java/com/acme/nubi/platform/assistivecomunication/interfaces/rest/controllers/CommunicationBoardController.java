@@ -37,7 +37,7 @@ import java.util.List;
 /** Tablero de pictogramas de un perfil: categorías, pictogramas y favoritos. */
 @RestController
 @RequestMapping(value = "/api/v1/profiles/{profileId}/communication-board", produces = "application/json")
-@Tag(name = "Communication Board", description = "Tablero de Comunicación Asistida (CAA)")
+@Tag(name = "Communication Board", description = "Augmentative and Alternative Communication (AAC) board")
 public class CommunicationBoardController {
     private final CommunicationBoardCommandService commandService;
     private final CommunicationBoardQueryService queryService;
@@ -49,14 +49,14 @@ public class CommunicationBoardController {
     }
 
     @GetMapping
-    @Operation(summary = "Obtiene el tablero del perfil; si no existe, lo crea con los pictogramas básicos")
+    @Operation(summary = "Gets the profile's board; if it does not exist, creates it with the basic pictograms")
     public ResponseEntity<BoardResource> getBoard(@PathVariable Long profileId) {
         var board = queryService.handle(new GetBoardByProfileIdQuery(profileId));
         return ResponseEntity.ok(BoardResourceFromEntityAssembler.toResourceFromEntity(board));
     }
 
     @GetMapping("/quick-access")
-    @Operation(summary = "Lista los pictogramas favoritos del acceso rápido")
+    @Operation(summary = "Lists the favorite pictograms in quick access")
     public ResponseEntity<List<PictogramResource>> getQuickAccess(@PathVariable Long profileId) {
         var pictograms = queryService.handle(new GetQuickAccessQuery(profileId));
         return ResponseEntity.ok(pictograms.stream()
@@ -64,7 +64,7 @@ public class CommunicationBoardController {
     }
 
     @PostMapping("/categories")
-    @Operation(summary = "Crea una categoría personalizada")
+    @Operation(summary = "Creates a custom category")
     public ResponseEntity<CategoryResource> createCategory(@PathVariable Long profileId,
                                                            @Valid @RequestBody CreateCategoryResource resource) {
         var category = commandService.handle(new CreateCategoryCommand(profileId, resource.name()));
@@ -73,7 +73,7 @@ public class CommunicationBoardController {
     }
 
     @PostMapping("/pictograms")
-    @Operation(summary = "Agrega un pictograma personalizado a una categoría")
+    @Operation(summary = "Adds a custom pictogram to a category")
     public ResponseEntity<PictogramResource> createPictogram(@PathVariable Long profileId,
                                                              @Valid @RequestBody CreatePictogramResource resource) {
         var pictogram = commandService.handle(
@@ -83,7 +83,7 @@ public class CommunicationBoardController {
     }
 
     @PutMapping("/pictograms/{pictogramId}/favorite")
-    @Operation(summary = "Marca un pictograma como favorito")
+    @Operation(summary = "Marks a pictogram as favorite")
     public ResponseEntity<PictogramResource> markFavorite(@PathVariable Long profileId,
                                                           @PathVariable Long pictogramId) {
         var pictogram = commandService.handle(new MarkFavoriteCommand(profileId, pictogramId));
@@ -91,7 +91,7 @@ public class CommunicationBoardController {
     }
 
     @DeleteMapping("/pictograms/{pictogramId}/favorite")
-    @Operation(summary = "Quita un pictograma de los favoritos")
+    @Operation(summary = "Removes a pictogram from favorites")
     public ResponseEntity<PictogramResource> unmarkFavorite(@PathVariable Long profileId,
                                                             @PathVariable Long pictogramId) {
         var pictogram = commandService.handle(new UnmarkFavoriteCommand(profileId, pictogramId));
@@ -99,7 +99,7 @@ public class CommunicationBoardController {
     }
 
     @PutMapping("/pictograms/{pictogramId}/category")
-    @Operation(summary = "Mueve un pictograma a otra categoría del tablero")
+    @Operation(summary = "Moves a pictogram to another category of the board")
     public ResponseEntity<PictogramResource> moveToCategory(@PathVariable Long profileId,
                                                             @PathVariable Long pictogramId,
                                                             @Valid @RequestBody MoveToCategoryResource resource) {

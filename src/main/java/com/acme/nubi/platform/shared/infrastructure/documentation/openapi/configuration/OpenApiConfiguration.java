@@ -13,7 +13,7 @@ public class OpenApiConfiguration {
         return new OpenAPI()
                 .info(new Info()
                         .title("Nubi Platform API")
-                        .description("RESTful API de Nubi: apoyo a niños y adolescentes autistas y a sus padres durante una crisis.")
+                        .description("Nubi RESTful API: support for autistic children and adolescents and their parents during a crisis.")
                         .version("v1.0.0"));
     }
 }

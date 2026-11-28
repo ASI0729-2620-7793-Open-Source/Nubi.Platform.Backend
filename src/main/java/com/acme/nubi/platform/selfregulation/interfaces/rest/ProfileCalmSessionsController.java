@@ -18,7 +18,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/v1/profiles/{profileId}/calm-sessions", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Calm Sessions", description = "Sesiones de calma y temporizador de calma (Autorregulación)")
+@Tag(name = "Calm Sessions", description = "Calm sessions and calm timer (Self-Regulation)")
 public class ProfileCalmSessionsController {
 
     private final CalmSessionQueryService calmSessionQueryService;
@@ -28,7 +28,7 @@ public class ProfileCalmSessionsController {
     }
 
     @GetMapping
-    @Operation(summary = "Get the calm sessions of a profile", description = "De la más reciente a la más antigua.")
+    @Operation(summary = "Get the calm sessions of a profile", description = "From newest to oldest.")
     public ResponseEntity<List<CalmSessionResource>> getCalmSessions(@PathVariable Long profileId) {
         var sessions = calmSessionQueryService.handle(new GetCalmSessionsByProfileIdQuery(profileId));
         return ResponseEntity.ok(sessions.stream()

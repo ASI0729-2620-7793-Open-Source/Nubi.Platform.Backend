@@ -18,7 +18,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/v1/profiles/{profileId}/sos-sessions", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "SOS Sessions", description = "Modo SOS: sesiones guiadas durante una crisis (Gestión de Crisis)")
+@Tag(name = "SOS Sessions", description = "SOS Mode: guided sessions during a crisis (Crisis Management)")
 public class ProfileSosSessionsController {
 
     private final SosSessionQueryService sosSessionQueryService;
@@ -28,7 +28,7 @@ public class ProfileSosSessionsController {
     }
 
     @GetMapping
-    @Operation(summary = "Get the SOS sessions of a profile", description = "De la más reciente a la más antigua.")
+    @Operation(summary = "Get the SOS sessions of a profile", description = "From newest to oldest.")
     public ResponseEntity<List<SosSessionResource>> getSosSessions(@PathVariable Long profileId) {
         var sessions = sosSessionQueryService.handle(new GetSosSessionsByProfileIdQuery(profileId));
         return ResponseEntity.ok(sessions.stream()
@@ -38,7 +38,7 @@ public class ProfileSosSessionsController {
 
     @GetMapping("/in-progress")
     @Operation(summary = "Get the SOS session in progress of a profile",
-            description = "Responde 404 si el perfil no tiene una sesión en curso.")
+            description = "Responds 404 if the profile has no session in progress.")
     public ResponseEntity<SosSessionResource> getInProgressSosSession(@PathVariable Long profileId) {
         return sosSessionQueryService.handle(new GetActiveSosSessionByProfileIdQuery(profileId))
                 .map(SosSessionResourceFromEntityAssembler::toResourceFromEntity)

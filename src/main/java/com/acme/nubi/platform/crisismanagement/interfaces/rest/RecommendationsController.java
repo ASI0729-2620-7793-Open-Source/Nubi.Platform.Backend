@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(value = "/api/v1/recommendations", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Recommendations", description = "Recomendaciones personalizadas por perfil (Gestión de Crisis)")
+@Tag(name = "Recommendations", description = "Personalized recommendations per profile (Crisis Management)")
 public class RecommendationsController {
 
     private final RecommendationCommandService recommendationCommandService;
@@ -44,8 +44,8 @@ public class RecommendationsController {
 
     @PutMapping(value = "/{recommendationId}/preferences", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Rate a recommendation",
-            description = "Registra la utilidad (1 a 5) y/o la marca de favorita de un cuidador. "
-                    + "Volver a calificar actualiza la preferencia existente.")
+            description = "Records a caregiver's usefulness rating (1 to 5) and/or favorite mark. "
+                    + "Rating again updates the existing preference.")
     public ResponseEntity<?> ratePreference(@PathVariable Long recommendationId,
                                             @RequestBody RatePreferenceResource resource) {
         return recommendationCommandService.handle(new RatePreferenceCommand(

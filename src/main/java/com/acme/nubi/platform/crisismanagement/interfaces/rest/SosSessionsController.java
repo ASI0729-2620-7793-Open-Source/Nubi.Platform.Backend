@@ -37,7 +37,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping(value = "/api/v1/sos-sessions", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "SOS Sessions", description = "Modo SOS: sesiones guiadas durante una crisis (Gestión de Crisis)")
+@Tag(name = "SOS Sessions", description = "SOS Mode: guided sessions during a crisis (Crisis Management)")
 public class SosSessionsController {
 
     private final SosSessionCommandService sosSessionCommandService;
@@ -54,7 +54,7 @@ public class SosSessionsController {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Activate the SOS mode",
-            description = "Abre una sesión SOS con la guía vigente. Solo puede haber una sesión en curso por perfil.")
+            description = "Opens an SOS session with the current guide. Only one session can be in progress per profile.")
     public ResponseEntity<?> startSosSession(@RequestBody StartSosSessionResource resource) {
         var command = StartSosSessionCommandFromResourceAssembler.toCommandFromResource(resource);
         return sosSessionCommandService.handle(command).fold(
@@ -80,7 +80,7 @@ public class SosSessionsController {
 
     @GetMapping("/{sosSessionId}/guide")
     @Operation(summary = "Get the guide of an SOS session",
-            description = "La guía con los pasos en el orden personalizado según el detonante de la sesión.")
+            description = "The guide with its steps in the order personalized for the session's trigger.")
     public ResponseEntity<?> getSessionGuide(@PathVariable Long sosSessionId) {
         var session = sosSessionQueryService.handle(new GetSosSessionByIdQuery(sosSessionId));
         if (session.isEmpty()) {
@@ -97,8 +97,8 @@ public class SosSessionsController {
 
     @PatchMapping(value = "/{sosSessionId}/steps/{stepId}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Update the status of a step",
-            description = "status = COMPLETED registra el paso como hecho (repetirlo no tiene efecto). "
-                    + "status = SKIPPED lo omite; omitir un paso obligatorio exige confirmed = true.")
+            description = "status = COMPLETED records the step as done (repeating it has no effect). "
+                    + "status = SKIPPED skips it; skipping a mandatory step requires confirmed = true.")
     public ResponseEntity<?> updateStep(@PathVariable Long sosSessionId, @PathVariable Long stepId,
                                         @RequestBody UpdateStepStatusResource resource) {
         var status = resource == null || resource.status() == null ? "" : resource.status().toUpperCase();
@@ -113,7 +113,7 @@ public class SosSessionsController {
 
     @PostMapping("/{sosSessionId}/steps/{stepId}/alternatives")
     @Operation(summary = "Create an alternative technique suggestion",
-            description = "Sugiere la técnica alternativa del paso cuando el cuidador no puede aplicarlo.")
+            description = "Suggests the alternative technique of the step when the caregiver cannot apply it.")
     public ResponseEntity<?> createAlternative(@PathVariable Long sosSessionId, @PathVariable Long stepId) {
         return sosSessionCommandService.handle(new RequestAlternativeCommand(sosSessionId, stepId)).fold(
                 technique -> ResponseEntity.status(HttpStatus.CREATED).body(
@@ -123,8 +123,8 @@ public class SosSessionsController {
 
     @PatchMapping(value = "/{sosSessionId}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Update the SOS session status",
-            description = "status = FINISHED cierra la sesión: si todos los pasos fueron atendidos termina normal, "
-                    + "si no, antes de tiempo. observedState y finalIntensity son opcionales.")
+            description = "status = FINISHED closes the session: if every step was handled it ends normally, "
+                    + "otherwise it ends early. observedState and finalIntensity are optional.")
     public ResponseEntity<?> updateSosSession(@PathVariable Long sosSessionId,
                                               @RequestBody UpdateSosSessionResource resource) {
         if (resource == null || !"FINISHED".equalsIgnoreCase(resource.status())) {

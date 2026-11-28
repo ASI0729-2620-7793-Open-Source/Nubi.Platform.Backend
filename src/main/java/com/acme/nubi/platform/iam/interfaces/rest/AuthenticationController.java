@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(value = "/api/v1/authentication", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Authentication", description = "Registro e inicio de sesión de cuidadores")
+@Tag(name = "Authentication", description = "Caregiver sign-up and sign-in")
 public class AuthenticationController {
 
     private final AuthenticationCommandService authenticationCommandService;
@@ -51,7 +51,7 @@ public class AuthenticationController {
     }
 
     @GetMapping("/me")
-    @Operation(summary = "Get the signed-in account", description = "Usa la cabecera X-Account-Id.")
+    @Operation(summary = "Get the signed-in account", description = "Uses the X-Account-Id header.")
     public ResponseEntity<?> me(@RequestHeader("X-Account-Id") Long accountId) {
         return authenticationCommandService.findById(accountId)
                 .<ResponseEntity<?>>map(account -> ResponseEntity.ok(AuthenticatedUserResource.from(account)))

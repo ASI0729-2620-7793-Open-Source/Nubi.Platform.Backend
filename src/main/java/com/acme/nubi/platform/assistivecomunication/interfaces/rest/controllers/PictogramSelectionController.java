@@ -31,7 +31,7 @@ import java.util.List;
 /** Mensajes que el usuario envía al seleccionar pictogramas y su confirmación de comprensión. */
 @RestController
 @RequestMapping(value = "/api/v1/profiles/{profileId}/communication-board", produces = "application/json")
-@Tag(name = "Pictogram Selections", description = "Selección de pictogramas y confirmación del acompañante")
+@Tag(name = "Pictogram Selections", description = "Pictogram selection and companion confirmation")
 public class PictogramSelectionController {
     private final CommunicationBoardCommandService commandService;
     private final CommunicationBoardQueryService queryService;
@@ -43,7 +43,7 @@ public class PictogramSelectionController {
     }
 
     @PostMapping("/pictograms/{pictogramId}/selections")
-    @Operation(summary = "El usuario selecciona un pictograma para comunicar una necesidad")
+    @Operation(summary = "The user selects a pictogram to communicate a need")
     public ResponseEntity<SelectionResource> selectPictogram(@PathVariable Long profileId,
                                                              @PathVariable Long pictogramId) {
         var selection = commandService.handle(new SelectPictogramCommand(profileId, pictogramId));
@@ -52,7 +52,7 @@ public class PictogramSelectionController {
     }
 
     @GetMapping("/selections")
-    @Operation(summary = "Historial de selecciones; se puede filtrar por estado")
+    @Operation(summary = "Selection history; it can be filtered by status")
     public ResponseEntity<List<SelectionResource>> getSelections(@PathVariable Long profileId,
                                                                  @RequestParam(required = false) SelectionStatus status) {
         var selections = queryService.handle(new GetSelectionsByProfileIdQuery(profileId, status));
@@ -61,9 +61,9 @@ public class PictogramSelectionController {
     }
 
     @PatchMapping("/selections/{selectionId}")
-    @Operation(summary = "Cambia el estado de una selección",
-            description = "DELIVERED: llegó al cuidador. UNDERSTOOD: el acompañante entendió el mensaje. "
-                    + "NOT_UNDERSTOOD: no se entendió y se genera una solicitud de ayuda.")
+    @Operation(summary = "Changes the status of a selection",
+            description = "DELIVERED: it reached the caregiver. UNDERSTOOD: the companion understood the message. "
+                    + "NOT_UNDERSTOOD: it was not understood and a help request is created.")
     public ResponseEntity<SelectionResource> updateStatus(@PathVariable Long profileId,
                                                           @PathVariable Long selectionId,
                                                           @Valid @RequestBody UpdateSelectionStatusResource resource) {
