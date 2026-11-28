@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /** Recorre la API del tablero CAA completa sobre una base H2 en memoria. */
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 class CommunicationBoardApiTest {
     private static final String BASE = "/api/v1/profiles/%d/communication-board";
 

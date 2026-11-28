@@ -1,5 +1,6 @@
 package com.acme.nubi.platform.crisismanagement.interfaces.rest;
 
+import com.acme.nubi.platform.shared.domain.exceptions.ResourceNotFoundException;
 import com.acme.nubi.platform.crisismanagement.domain.model.aggregates.SosSession;
 import com.acme.nubi.platform.crisismanagement.domain.model.commands.CompleteStepCommand;
 import com.acme.nubi.platform.crisismanagement.domain.model.commands.FinishSosSessionCommand;
@@ -75,7 +76,7 @@ public class SosSessionsController {
         return sosSessionQueryService.handle(new GetSosSessionByIdQuery(sosSessionId))
                 .map(SosSessionResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseThrow(() -> new ResourceNotFoundException("The requested resource does not exist."));
     }
 
     @GetMapping("/{sosSessionId}/guide")

@@ -1,5 +1,7 @@
 package com.acme.nubi.platform.crisismanagement.interfaces.rest;
 
+import com.acme.nubi.platform.shared.domain.exceptions.ResourceNotFoundException;
+import com.acme.nubi.platform.profile.interfaces.acl.ProfilesContextFacade;
 import com.acme.nubi.platform.crisismanagement.domain.model.commands.GenerateRecommendationsCommand;
 import com.acme.nubi.platform.crisismanagement.domain.model.queries.GetRecommendationsByProfileIdQuery;
 import com.acme.nubi.platform.crisismanagement.domain.model.valueobjects.RecommendationTopic;
@@ -29,8 +31,12 @@ public class ProfileRecommendationsController {
     private final RecommendationCommandService recommendationCommandService;
     private final RecommendationQueryService recommendationQueryService;
 
+    private final ProfilesContextFacade profiles;
+
     public ProfileRecommendationsController(RecommendationCommandService recommendationCommandService,
-                                            RecommendationQueryService recommendationQueryService) {
+                                            RecommendationQueryService recommendationQueryService,
+            ProfilesContextFacade profiles) {
+        this.profiles = profiles;
         this.recommendationCommandService = recommendationCommandService;
         this.recommendationQueryService = recommendationQueryService;
     }
@@ -40,6 +46,9 @@ public class ProfileRecommendationsController {
             description = "Only current versions, optionally filtered by topic.")
     public ResponseEntity<List<RecommendationResource>> getRecommendations(
             @PathVariable Long profileId, @RequestParam(required = false) RecommendationTopic topic) {
+        if (!profiles.existsActiveProfile(profileId)) {
+            throw new ResourceNotFoundException("Profile", profileId);
+        }
         var recommendations = recommendationQueryService.handle(
                 new GetRecommendationsByProfileIdQuery(profileId, topic));
         return ResponseEntity.ok(recommendations.stream()

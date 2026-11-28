@@ -1,5 +1,6 @@
 package com.acme.nubi.platform.crisismanagement.interfaces.rest;
 
+import com.acme.nubi.platform.shared.domain.exceptions.ResourceNotFoundException;
 import com.acme.nubi.platform.crisismanagement.domain.model.commands.RatePreferenceCommand;
 import com.acme.nubi.platform.crisismanagement.domain.model.queries.GetRecommendationByIdQuery;
 import com.acme.nubi.platform.crisismanagement.domain.services.RecommendationCommandService;
@@ -39,7 +40,7 @@ public class RecommendationsController {
         return recommendationQueryService.handle(new GetRecommendationByIdQuery(recommendationId))
                 .map(RecommendationResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseThrow(() -> new ResourceNotFoundException("The requested resource does not exist."));
     }
 
     @PutMapping(value = "/{recommendationId}/preferences", consumes = MediaType.APPLICATION_JSON_VALUE)

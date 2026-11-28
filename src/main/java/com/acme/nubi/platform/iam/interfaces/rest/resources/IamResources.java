@@ -14,11 +14,15 @@ public final class IamResources {
     public record SignInResource(String email, String password) {
     }
 
-    /** Cuenta con la sesión iniciada. El frontend envía {@code id} en la cabecera X-Account-Id. */
-    public record AuthenticatedUserResource(Long id, String email, String fullName) {
+    /** Cuenta con la sesión iniciada. El frontend envía {@code token} como {@code Authorization: Bearer}. */
+    public record AuthenticatedUserResource(Long id, String email, String fullName, String token) {
 
         public static AuthenticatedUserResource from(UserAccount account) {
-            return new AuthenticatedUserResource(account.getId(), account.getEmail(), account.getFullName());
+            return new AuthenticatedUserResource(account.getId(), account.getEmail(), account.getFullName(), null);
+        }
+
+        public AuthenticatedUserResource withToken(String issued) {
+            return new AuthenticatedUserResource(id, email, fullName, issued);
         }
     }
 }

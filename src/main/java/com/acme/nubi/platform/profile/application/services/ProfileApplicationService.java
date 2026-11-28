@@ -1,5 +1,7 @@
 package com.acme.nubi.platform.profile.application.services;
 
+import com.acme.nubi.platform.profile.application.dto.ProfileResponses.InvitationResponse;
+import com.acme.nubi.platform.iam.interfaces.acl.IamContextFacade;
 import com.acme.nubi.platform.profile.application.dto.ProfileRequests.CreateProfileRequest;
 import com.acme.nubi.platform.profile.application.dto.ProfileRequests.InviteCaregiverRequest;
 import com.acme.nubi.platform.profile.application.dto.ProfileRequests.LinkTrustedContactRequest;
@@ -47,6 +49,7 @@ public class ProfileApplicationService {
     private final ProfileRepository profileRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final IamContextFacade iam;
 
     // -------------------------------------------------------------------
     // US-01 — Crear y consultar
@@ -94,6 +97,24 @@ public class ProfileApplicationService {
     public List<ProfileResponse> listAccessible(Long accountId) {
         return profileRepository.findByCaregiverAccountId(accountId).stream()
                 .map(ProfileResponse::from)
+                .toList();
+    }
+
+    /** Invitaciones que la cuenta todavía no aceptó, buscadas por su correo (US-06). */
+    @Transactional(readOnly = true)
+    public List<InvitationResponse> listPendingInvitations(Long accountId) {
+        String email = iam.fetchEmail(accountId).orElse(null);
+        if (email == null) {
+            return List.of();
+        }
+        return profileRepository.findByPendingInvitationEmail(email).stream()
+                .map(ProfileResponse::from)
+                .flatMap(profile -> profile.caregivers().stream()
+                        .filter(caregiver -> "PENDING".equals(caregiver.status())
+                                && email.equalsIgnoreCase(caregiver.invitedEmail()))
+                        .map(caregiver -> new InvitationResponse(
+                                profile.id(), caregiver.id(), profile.displayName(),
+                                caregiver.role(), caregiver.invitedAt())))
                 .toList();
     }
 
@@ -266,6 +287,16 @@ public class ProfileApplicationService {
             return Result.failure(loaded.failure().orElseThrow());
         }
         NeurodivergentProfile profile = loaded.success().orElseThrow();
+        // Solo la cuenta del correo invitado puede aceptar la invitación.
+        String email = iam.fetchEmail(accountId).orElse(null);
+        boolean someoneElse = email != null && ProfileResponse.from(profile).caregivers().stream()
+                .anyMatch(caregiver -> caregiverId.equals(caregiver.id())
+                        && !email.equalsIgnoreCase(caregiver.invitedEmail()));
+        if (someoneElse) {
+            return Result.failure(BusinessError.conflict(
+                    "caregiver.invitation.otherAccount",
+                    "La invitación corresponde a otro correo."));
+        }
         Result<NeurodivergentProfile, BusinessError> accepted = DomainGuard.guard(() ->
                 profile.acceptCaregiver(caregiverId, accountId));
         return DomainGuard.flatMap(

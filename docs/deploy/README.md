@@ -102,3 +102,7 @@ En la VM, un respaldo diario a las 3:00 a. m.:
 sudo mkdir -p /var/backups/nubi
 (sudo crontab -l 2>/dev/null; echo "0 3 * * * mysqldump nubi_db | gzip > /var/backups/nubi/nubi_\$(date +\%F).sql.gz") | sudo crontab -
 ```
+
+## Token de acceso
+
+La API exige `Authorization: Bearer <token>`; el token lo entregan `sign-in` y `sign-up`. Define `NUBI_TOKEN_SECRET` (cadena larga y privada) para que los tokens sigan valiendo tras un reinicio; si falta, se genera una clave al arrancar. `nubi.security.token-required=false` desactiva la exigencia solo para pruebas locales.

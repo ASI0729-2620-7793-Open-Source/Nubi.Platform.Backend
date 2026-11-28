@@ -1,5 +1,6 @@
 package com.acme.nubi.platform.selfregulation.interfaces.rest;
 
+import com.acme.nubi.platform.shared.domain.exceptions.ResourceNotFoundException;
 import com.acme.nubi.platform.selfregulation.domain.model.aggregates.CalmSession;
 import com.acme.nubi.platform.selfregulation.domain.model.commands.AdjustIntensityCommand;
 import com.acme.nubi.platform.selfregulation.domain.model.commands.AdvanceCalmTimerCommand;
@@ -79,7 +80,7 @@ public class CalmSessionsController {
         return calmSessionQueryService.handle(new GetCalmSessionByIdQuery(calmSessionId))
                 .map(CalmSessionResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseThrow(() -> new ResourceNotFoundException("The requested resource does not exist."));
     }
 
     @PutMapping(value = "/{calmSessionId}/resource", consumes = MediaType.APPLICATION_JSON_VALUE)

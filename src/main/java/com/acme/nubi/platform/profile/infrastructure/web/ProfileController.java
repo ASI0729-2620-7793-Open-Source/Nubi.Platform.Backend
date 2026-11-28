@@ -62,6 +62,11 @@ public class ProfileController {
         return ResponseEntity.ok(service.listAccessible(accountId));
     }
 
+    @GetMapping("/invitations")
+    public ResponseEntity<?> listInvitations(@RequestHeader(ACCOUNT_HEADER) Long accountId) {
+        return ResponseEntity.ok(service.listPendingInvitations(accountId));
+    }
+
     @GetMapping("/{profileId}")
     public ResponseEntity<?> get(
             @RequestHeader(ACCOUNT_HEADER) Long accountId, @PathVariable Long profileId) {

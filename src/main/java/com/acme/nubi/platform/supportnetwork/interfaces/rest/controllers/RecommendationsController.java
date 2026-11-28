@@ -1,5 +1,6 @@
 package com.acme.nubi.platform.supportnetwork.interfaces.rest.controllers;
 
+import com.acme.nubi.platform.shared.domain.exceptions.ResourceNotFoundException;
 import com.acme.nubi.platform.supportnetwork.application.internal.commandservices.RecommendationCommandServiceImpl;
 import com.acme.nubi.platform.supportnetwork.application.internal.queryservices.RecommendationQueryServiceImpl;
 import com.acme.nubi.platform.supportnetwork.domain.model.aggregates.Recommendation;
@@ -32,10 +33,7 @@ import java.util.List;
 @RequestMapping("/api/v1/support-network/recommendations")
 public class RecommendationsController {
 
-    /**
-     * Identifica la cuenta que consulta. Las lecturas sin esta cabecera responden 401; la
-     * cabecera no es un token firmado, por lo que no verifica la identidad.
-     */
+    /** Cuenta que consulta: la fija el filtro a partir del token de acceso. */
     private static final String ACCOUNT_HEADER = "X-Account-Id";
 
     private final RecommendationCommandServiceImpl commandService;
@@ -72,7 +70,7 @@ public class RecommendationsController {
         return queryService.handle(new GetRecommendationByIdQuery(recommendationId))
                 .map(RecommendationResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseThrow(() -> new ResourceNotFoundException("The requested resource does not exist."));
     }
 
     @GetMapping
@@ -119,7 +117,7 @@ public class RecommendationsController {
             return ResponseEntity.ok(
                     RecommendationResourceFromEntityAssembler.toResourceFromEntity(recommendation));
         } catch (EntityNotFoundException exception) {
-            return ResponseEntity.notFound().build();
+            throw new ResourceNotFoundException("The requested resource does not exist.");
         }
     }
 }
