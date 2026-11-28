@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(value = "/api/v1/profiles/{profileId}/routine-steps", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Visual Routine", description = "Rutina visual del día del niño")
+@Tag(name = "Visual Routine", description = "The child's visual routine for the day")
 public class RoutineStepsController {
 
     private final RoutineService routineService;
@@ -35,7 +35,7 @@ public class RoutineStepsController {
 
     @GetMapping
     @Operation(summary = "Get the routine of the day",
-            description = "Si el niño todavía no tiene rutina, se crea la rutina sugerida.")
+            description = "If the child has no routine yet, the suggested routine is created.")
     public ResponseEntity<?> getRoutine(@PathVariable Long profileId) {
         var today = routineService.today();
         return routineService.getRoutine(profileId).fold(
