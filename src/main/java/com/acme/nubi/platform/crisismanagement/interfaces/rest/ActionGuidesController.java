@@ -1,5 +1,6 @@
 package com.acme.nubi.platform.crisismanagement.interfaces.rest;
 
+import com.acme.nubi.platform.shared.domain.exceptions.ResourceNotFoundException;
 import com.acme.nubi.platform.crisismanagement.domain.model.queries.GetActionGuideByIdQuery;
 import com.acme.nubi.platform.crisismanagement.domain.model.queries.GetActiveActionGuideQuery;
 import com.acme.nubi.platform.crisismanagement.domain.services.ActionGuideQueryService;
@@ -32,7 +33,7 @@ public class ActionGuidesController {
         return actionGuideQueryService.handle(new GetActiveActionGuideQuery())
                 .map(ActionGuideResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseThrow(() -> new ResourceNotFoundException("The requested resource does not exist."));
     }
 
     @GetMapping("/{actionGuideId}")
@@ -41,6 +42,6 @@ public class ActionGuidesController {
         return actionGuideQueryService.handle(new GetActionGuideByIdQuery(actionGuideId))
                 .map(ActionGuideResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseThrow(() -> new ResourceNotFoundException("The requested resource does not exist."));
     }
 }

@@ -1,5 +1,6 @@
 package com.acme.nubi.platform.supportnetwork.interfaces.rest.controllers;
 
+import com.acme.nubi.platform.shared.domain.exceptions.ResourceNotFoundException;
 import com.acme.nubi.platform.supportnetwork.application.internal.commandservices.EpisodeRecordCommandServiceImpl;
 import com.acme.nubi.platform.supportnetwork.application.internal.queryservices.EpisodeRecordQueryServiceImpl;
 import com.acme.nubi.platform.supportnetwork.domain.model.aggregates.EpisodeRecord;
@@ -63,7 +64,7 @@ public class EpisodeRecordsController {
         return queryService.handle(new GetEpisodeRecordByIdQuery(episodeRecordId))
                 .map(EpisodeRecordResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseThrow(() -> new ResourceNotFoundException("The requested resource does not exist."));
     }
 
     /**
@@ -90,7 +91,7 @@ public class EpisodeRecordsController {
         return queryService.handle(new GetLatestEpisodeRecordByProfileIdQuery(profileId))
                 .map(EpisodeRecordResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseThrow(() -> new ResourceNotFoundException("The requested resource does not exist."));
     }
 
     @GetMapping("/recent")
@@ -115,7 +116,7 @@ public class EpisodeRecordsController {
             return ResponseEntity.ok(
                     EpisodeRecordResourceFromEntityAssembler.toResourceFromEntity(episodeRecord));
         } catch (EntityNotFoundException exception) {
-            return ResponseEntity.notFound().build();
+            throw new ResourceNotFoundException("The requested resource does not exist.");
         }
     }
 }

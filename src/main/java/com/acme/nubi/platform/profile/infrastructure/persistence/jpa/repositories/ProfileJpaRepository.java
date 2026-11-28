@@ -43,4 +43,16 @@ public interface ProfileJpaRepository extends JpaRepository<ProfileJpaEntity, Lo
     List<ProfileJpaEntity> findActiveAccessibleBy(
             @Param("accountId") Long accountId,
             @Param("status") InvitationStatus status);
+
+    @Query("""
+            select p from ProfileJpaEntity p
+             where p.active = true
+               and exists (select 1 from ProfileCaregiverJpaEntity c
+                            where c.profile = p
+                              and lower(c.invitedEmail) = lower(:email)
+                              and c.status = :status)
+            """)
+    List<ProfileJpaEntity> findActiveInvitationsFor(
+            @Param("email") String email,
+            @Param("status") InvitationStatus status);
 }

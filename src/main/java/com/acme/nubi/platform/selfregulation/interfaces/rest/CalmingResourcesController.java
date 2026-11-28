@@ -1,5 +1,6 @@
 package com.acme.nubi.platform.selfregulation.interfaces.rest;
 
+import com.acme.nubi.platform.shared.domain.exceptions.ResourceNotFoundException;
 import com.acme.nubi.platform.selfregulation.domain.model.queries.GetCalmingResourceByIdQuery;
 import com.acme.nubi.platform.selfregulation.domain.model.queries.GetCalmingResourcesQuery;
 import com.acme.nubi.platform.selfregulation.domain.model.valueobjects.ResourceType;
@@ -47,6 +48,6 @@ public class CalmingResourcesController {
         return calmingResourceQueryService.handle(new GetCalmingResourceByIdQuery(calmingResourceId))
                 .map(CalmingResourceResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseThrow(() -> new ResourceNotFoundException("The requested resource does not exist."));
     }
 }

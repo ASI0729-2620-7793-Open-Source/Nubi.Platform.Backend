@@ -1,5 +1,6 @@
 package com.acme.nubi.platform.supportnetwork.interfaces.rest.controllers;
 
+import com.acme.nubi.platform.shared.domain.exceptions.ResourceNotFoundException;
 import com.acme.nubi.platform.supportnetwork.application.internal.commandservices.HelpRequestCommandServiceImpl;
 import com.acme.nubi.platform.supportnetwork.application.internal.queryservices.HelpRequestQueryServiceImpl;
 import com.acme.nubi.platform.supportnetwork.domain.model.aggregates.HelpRequest;
@@ -58,7 +59,7 @@ public class HelpRequestsController {
         return queryService.handle(new GetHelpRequestByIdQuery(helpRequestId))
                 .map(HelpRequestResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseThrow(() -> new ResourceNotFoundException("The requested resource does not exist."));
     }
 
     @GetMapping
@@ -85,7 +86,7 @@ public class HelpRequestsController {
             };
             return ResponseEntity.ok(HelpRequestResourceFromEntityAssembler.toResourceFromEntity(helpRequest));
         } catch (EntityNotFoundException exception) {
-            return ResponseEntity.notFound().build();
+            throw new ResourceNotFoundException("The requested resource does not exist.");
         }
     }
 }

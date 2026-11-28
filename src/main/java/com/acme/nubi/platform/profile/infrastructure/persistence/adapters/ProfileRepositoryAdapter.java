@@ -66,6 +66,16 @@ public class ProfileRepositoryAdapter implements ProfileRepository {
 
     @Override
     @Transactional(readOnly = true)
+    public List<NeurodivergentProfile> findByPendingInvitationEmail(String email) {
+        return jpaRepository
+                .findActiveInvitationsFor(email, InvitationStatus.PENDING)
+                .stream()
+                .map(ProfileMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Optional<Long> findOwnerAccountId(Long profileId) {
         return findById(profileId)
                 .flatMap(profile -> profile.caregivers().stream()
